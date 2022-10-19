@@ -70,15 +70,15 @@ export class ClientHistoryState implements HistoryState {
       console.error('Failed to access to sessionStorage.', error)
     }
 
-    // navigate or reloaded
-
     if (getNavigationType() === 'back_forward') {
+      // back or forward from other site
       this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, window.history.state.page)
     } else {
+      // navigate or reloaded
       this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
     }
 
-    // back or forwared
+    // back or forwared from same site
     window.addEventListener('popstate', event => {
       this._popState = true
 
@@ -87,7 +87,7 @@ export class ClientHistoryState implements HistoryState {
       }
     })
 
-    // back, forward or push
+    // back, forward
     Router.events.on('beforeHistoryChange', (url, { shallow }) => {
       if (this._popState) {
         this._save()
@@ -100,6 +100,7 @@ export class ClientHistoryState implements HistoryState {
       }
     })
 
+    // push
     const orgPushState = window.history.pushState
     window.history.pushState = (state, ...args) => {
       this._save()
@@ -109,6 +110,7 @@ export class ClientHistoryState implements HistoryState {
 
       this._action = 'push'
       this._page = state.page
+
       this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
 
       if (this.options.debug) {
