@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { ClientHistoryState } from "./history_state.client"
 import { ServerHistoryState } from './history_state.server'
 
@@ -12,27 +12,42 @@ export function initHistoryState(options: HistoryStateOptions = {}) {
 
 export function useHistoryState<T extends Record<string, unknown>>(
   restore: (data: T) => void,
-  backup: T,
+  backup: () => T
 ) {
+  const flag = useRef(false);
+  const data = useRef(backup())
+
   useEffect(() => {
+    if (flag.current) {
+      return
+    }
+    flag.current = true
+
     const instance = historyStateInstance as ClientHistoryState
     if (!instance) {
       throw new Error('historyStateInstance is not initialized.')
     }
 
     if (instance.action === 'back' || instance.action === 'forward' || instance.action === 'reload') {
+      if (instance.options.debug) {
+        console.log(`restore: data=${JSON.stringify(instance.data)}`)
+      }
       restore(instance.data as T)
     }
 
     const onBackupState = () => {
-      return backup
+      if (instance.options.debug) {
+        console.log(`backup: data=${JSON.stringify(data.current)}`)
+      }
+      return data.current
     }
 
     instance._register(onBackupState)
-    return () => {
-      instance._unregister(onBackupState)
-    }
   }, [])
+
+  useEffect(() => {
+    data.current = backup()
+  })
 
   return historyStateInstance
 }

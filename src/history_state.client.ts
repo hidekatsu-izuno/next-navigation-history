@@ -14,6 +14,7 @@ export class ClientHistoryState implements HistoryState {
   ]>([])
   private _dataFuncs = new Array<() => Record<string, unknown>>()
   private _route?: HistoryLocation = undefined
+  private _popstete = false
 
   constructor(
     public options: HistoryStateOptions,
@@ -69,37 +70,42 @@ export class ClientHistoryState implements HistoryState {
       console.error('Failed to access to sessionStorage.', error)
     }
 
-    this.onChanged(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`)
-
-    Router.events.on('beforeHistoryChange', (url, { shallow }) => {
-      this._save()
-      this._dataFuncs.length = 0
-
-      if (this.options.debug) {
-        this._debug('beforeHistoryChange')
+    const orgReplaceState = window.history.replaceState
+    window.history.replaceState = (state, ...args) => {
+      const newState = {
+        ...state,
+        page: window.history.state?.page ?? this._page
       }
-    })
-
-    const orgPushState = window.history.pushState
-    window.history.pushState = (...args) => {
-      const ret = orgPushState.apply(window.history, args)
-
-      this._action = 'push'
-      this._page++
-
+      const ret = orgReplaceState.apply(window.history, [newState, ...args])
       if (this.options.debug) {
-        this._debug('pushState')
+        console.log(`replaceState: page=${newState.page}`)
       }
-
       return ret
     }
 
-    Router.events.on('routeChangeComplete', (url, { shallow }) => {
-      this.onChanged(url)
+    // navigate or reloaded
+    this.afterRouteChange(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`)
 
-      if (this.options.debug) {
-        this._debug('afterEach')
+    // back or forwared
+    window.addEventListener('popstate', event => {
+      this.beforeRouteChange()
+      this.afterRouteChange(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`)
+      this._popstete = true
+    })
+
+    // pushed
+    Router.events.on('beforeHistoryChange', (url, { shallow }) => {
+      if (!this._popstete) {
+        this.beforeRouteChange()
       }
+    })
+    Router.events.on('routeChangeComplete', (url, { shallow }) => {
+      if (!this._popstete) {
+        this._action = 'push'
+        this._page++
+        this.afterRouteChange(url)
+      }
+      this._popstete = false
     })
 
 /*
@@ -150,7 +156,17 @@ export class ClientHistoryState implements HistoryState {
 */
   }
 
-  private onChanged(url: string) {
+  private beforeRouteChange() {
+    if (this._route) {
+      this._save()
+    }
+
+    if (this.options.debug) {
+      this._debug('beforeRouteChange')
+    }
+  }
+
+  private afterRouteChange(url: string) {
     this._route = filterRoute(url)
 
     const page = window.history.state && window.history.state.page
@@ -189,6 +205,10 @@ export class ClientHistoryState implements HistoryState {
         page: this._page
       }, '')
     }
+
+    if (this.options.debug) {
+      this._debug('afterRouteChange')
+    }
   }
 
   /** @internal */
@@ -197,6 +217,9 @@ export class ClientHistoryState implements HistoryState {
     if (index == -1) {
       this._dataFuncs.push(fn)
     }
+    if (this.options.debug) {
+      console.log('_register')
+    }
   }
 
   /** @internal */
@@ -204,6 +227,9 @@ export class ClientHistoryState implements HistoryState {
     const index = this._dataFuncs.indexOf(fn)
     if (index > -1) {
       this._dataFuncs.splice(index, 1)
+    }
+    if (this.options.debug) {
+      console.log('_unregister')
     }
   }
 
@@ -305,6 +331,7 @@ export class ClientHistoryState implements HistoryState {
         return Object.assign(prev, current())
       }, {})
       this._items[this._page][2] = backupData
+      this._dataFuncs.length = 0
     }
 
     if (this.options.overrideDefaultScrollBehavior) {
