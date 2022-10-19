@@ -71,7 +71,12 @@ export class ClientHistoryState implements HistoryState {
     }
 
     // navigate or reloaded
-    this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
+
+    if (getNavigationType() === 'back_forward') {
+      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, window.history.state.page)
+    } else {
+      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
+    }
 
     // back or forwared
     window.addEventListener('popstate', event => {
