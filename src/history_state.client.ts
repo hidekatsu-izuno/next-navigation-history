@@ -14,7 +14,7 @@ export class ClientHistoryState implements HistoryState {
   ]>([])
   private _dataFuncs = new Array<() => Record<string, unknown>>()
   private _route?: HistoryLocation = undefined
-  private _popstete = false
+  private _popState = false
 
   constructor(
     public options: HistoryStateOptions,
@@ -70,43 +70,63 @@ export class ClientHistoryState implements HistoryState {
       console.error('Failed to access to sessionStorage.', error)
     }
 
-    const orgReplaceState = window.history.replaceState
-    window.history.replaceState = (state, ...args) => {
-      const newState = {
-        ...state,
-        page: window.history.state?.page ?? this._page
-      }
-      const ret = orgReplaceState.apply(window.history, [newState, ...args])
-      if (this.options.debug) {
-        console.log(`replaceState: page=${newState.page}`)
-      }
-      return ret
-    }
-
     // navigate or reloaded
-    this.afterRouteChange(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`)
+    this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
 
     // back or forwared
     window.addEventListener('popstate', event => {
-      this.beforeRouteChange()
-      this.afterRouteChange(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`)
-      this._popstete = true
+      this._popState = true
+
+      if (this.options.debug) {
+        console.log(`popstate: page=${event.state?.page}`)
+      }
     })
 
-    // pushed
+    // back, forward or push
     Router.events.on('beforeHistoryChange', (url, { shallow }) => {
-      if (!this._popstete) {
-        this.beforeRouteChange()
+      if (this._popState) {
+        this._save()
+        this._enter(url, window.history.state.page)
+        this._popState = false
+      }
+
+      if (this.options.debug) {
+        console.log(`beforeHistoryChange: url=${url}`)
       }
     })
-    Router.events.on('routeChangeComplete', (url, { shallow }) => {
-      if (!this._popstete) {
-        this._action = 'push'
-        this._page++
-        this.afterRouteChange(url)
+
+    const orgPushState = window.history.pushState
+    window.history.pushState = (state, ...args) => {
+      this._save()
+
+      state.page = this._page + 1
+      const ret = orgPushState.apply(window.history, [state, ...args])
+
+      this._action = 'push'
+      this._page = state.page
+      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
+
+      if (this.options.debug) {
+        console.log(`pushState: page=${state.page}`)
       }
-      this._popstete = false
-    })
+
+      return ret
+    }
+
+    const orgReplaceState = window.history.replaceState
+    window.history.replaceState = (state, ...args) => {
+      if (state.page == null) {
+        state.page = window.history.state?.page || this._page
+      }
+
+      const ret = orgReplaceState.apply(window.history, [state, ...args])
+
+      if (this.options.debug) {
+        console.log(`replaceState: page=${state.page}`)
+      }
+
+      return ret
+    }
 
 /*
     if (this.options.overrideDefaultScrollBehavior) {
@@ -156,20 +176,9 @@ export class ClientHistoryState implements HistoryState {
 */
   }
 
-  private beforeRouteChange() {
-    if (this._route) {
-      this._save()
-    }
-
-    if (this.options.debug) {
-      this._debug('beforeRouteChange')
-    }
-  }
-
-  private afterRouteChange(url: string) {
+  private _enter(url: string, page: number) {
     this._route = filterRoute(url)
 
-    const page = window.history.state && window.history.state.page
     if (page != null && page !== this._page) {
       if (page < this._page) {
         this._action = 'back'
@@ -178,7 +187,7 @@ export class ClientHistoryState implements HistoryState {
       }
       this._page = page
     } else if (this._action === 'reload' && getNavigationType() === 'back_forward') {
-      if (page >= this._page) {
+      if (page != null && page >= this._page) {
         this._action = 'forward'
       } else {
         this._action = 'back'
@@ -199,13 +208,6 @@ export class ClientHistoryState implements HistoryState {
       this._items[this._page] = []
     }
 
-    if (page == null) {
-      window.history.replaceState({
-        ...window.history.state,
-        page: this._page
-      }, '')
-    }
-
     if (this.options.debug) {
       this._debug('afterRouteChange')
     }
@@ -219,17 +221,6 @@ export class ClientHistoryState implements HistoryState {
     }
     if (this.options.debug) {
       console.log('_register')
-    }
-  }
-
-  /** @internal */
-  _unregister(fn: () => Record<string, unknown>) {
-    const index = this._dataFuncs.indexOf(fn)
-    if (index > -1) {
-      this._dataFuncs.splice(index, 1)
-    }
-    if (this.options.debug) {
-      console.log('_unregister')
     }
   }
 

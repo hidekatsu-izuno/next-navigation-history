@@ -15,7 +15,8 @@ export function useHistoryState<T extends Record<string, unknown>>(
   backup: () => T
 ) {
   const flag = useRef(false);
-  const data = useRef(backup())
+  const data = useRef({})
+  data.current = backup()
 
   useEffect(() => {
     if (flag.current) {
@@ -27,27 +28,20 @@ export function useHistoryState<T extends Record<string, unknown>>(
     if (!instance) {
       throw new Error('historyStateInstance is not initialized.')
     }
-
+    if (instance.options.debug) {
+      console.log(`restore: data=${JSON.stringify(instance.data)} action=${instance.action}`)
+    }
     if (instance.action === 'back' || instance.action === 'forward' || instance.action === 'reload') {
-      if (instance.options.debug) {
-        console.log(`restore: data=${JSON.stringify(instance.data)}`)
-      }
       restore(instance.data as T)
     }
 
-    const onBackupState = () => {
+    instance._register(() => {
       if (instance.options.debug) {
         console.log(`backup: data=${JSON.stringify(data.current)}`)
       }
       return data.current
-    }
-
-    instance._register(onBackupState)
+    })
   }, [])
-
-  useEffect(() => {
-    data.current = backup()
-  })
 
   return historyStateInstance
 }
