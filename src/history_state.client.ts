@@ -1,9 +1,10 @@
-import { Router } from 'next/router'
 import LZString from 'lz-string'
-import { HistoryStateOptions, HistoryLocation, HistoryLocationRaw, HistoryItem, HistoryState } from './index'
+import { Router } from 'next/router'
+import { HistoryState } from './history_state'
+import { HistoryStateOptions, HistoryLocation, HistoryLocationRaw, HistoryItem } from './index'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientHistoryState implements HistoryState {
+export class ClientHistoryState extends HistoryState {
   private _action = 'navigate'
   private _page = 0
   private _items = new Array<[
@@ -18,7 +19,10 @@ export class ClientHistoryState implements HistoryState {
 
   constructor(
     public options: HistoryStateOptions,
+    router: typeof Router,
   ) {
+    super()
+
 /*
     if (Router.options.scrollBehavior) {
       options.overrideDefaultScrollBehavior = false;
@@ -326,8 +330,14 @@ export class ClientHistoryState implements HistoryState {
 
     if (this._dataFuncs != null) {
       const backupData = this._dataFuncs.reduce((prev, current) => {
-        return Object.assign(prev, current())
-      }, {})
+        const values = current()
+        for (const key in values) {
+          if (Object.prototype.hasOwnProperty.call(values, key)) {
+            prev[key] = values[key]
+          }
+        }
+        return prev
+      }, {} as Record<string, any>)
       this._items[this._page][2] = backupData
       this._dataFuncs.length = 0
     }

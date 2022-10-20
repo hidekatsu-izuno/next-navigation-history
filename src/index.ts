@@ -1,12 +1,18 @@
+import { NextConfig } from 'next'
+import { Router } from 'next/router'
 import { useEffect, useRef } from 'react'
-import { ClientHistoryState } from "./history_state.client"
-import { ServerHistoryState } from './history_state.server'
+import { HistoryState } from './history_state'
+import { ClientHistoryState } from './history_state.client'
 
-let historyStateInstance: HistoryState = new ServerHistoryState()
+let historyStateInstance = new HistoryState()
 
-export function initHistoryState(options: HistoryStateOptions = {}) {
+export function NextHistoryState(options: HistoryStateOptions = {}) {
   if (typeof window !== 'undefined') {
-    historyStateInstance = new ClientHistoryState(options)
+    historyStateInstance = new ClientHistoryState(options, Router)
+  }
+
+  return function withHistoryState(config: NextConfig) {
+    return config
   }
 }
 
@@ -19,7 +25,7 @@ export function useHistoryState<T extends Record<string, unknown>>(
   data.current = backup()
 
   useEffect(() => {
-    if (flag.current) {
+    if (typeof window === "undefined" || flag.current) {
       return
     }
     flag.current = true
@@ -29,7 +35,7 @@ export function useHistoryState<T extends Record<string, unknown>>(
       throw new Error('historyStateInstance is not initialized.')
     }
     if (instance.options.debug) {
-      console.log(`restore: data=${JSON.stringify(instance.data)} action=${instance.action}`)
+      console.log(`restore: action=${instance.action} data=${JSON.stringify(instance.data)}`)
     }
     if (instance.action === 'back' || instance.action === 'forward' || instance.action === 'reload') {
       restore(instance.data as T)
@@ -74,22 +80,4 @@ export interface HistoryItem {
   set data(value: Record<string, any> | undefined)
 
   get scrollPositions(): Record<string, { left: number, top: number }> | undefined
-}
-
-export interface HistoryState {
-  get action(): string
-
-  get page(): number
-
-  get data(): Record<string, any> | undefined
-
-  get length(): number
-
-  getItem(page: number): HistoryItem | undefined
-
-  getItems(): Array<HistoryItem>
-
-  clearItemData(page: number): Record<string, any> | undefined
-
-  findBackPage(location: HistoryLocationRaw, partial?: boolean): number | undefined
 }

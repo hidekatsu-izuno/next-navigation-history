@@ -1,10 +1,10 @@
-import { HistoryItem, HistoryLocationRaw, HistoryState } from './index'
+import { HistoryItem, HistoryLocationRaw } from './index'
 
-export class ServerHistoryState implements HistoryState {
-  private _action = 'navigate'
+export class HistoryState {
+  public options: Record<string, any> = {}
 
   get action(): string {
-    return this._action;
+    return 'navigate';
   }
 
   get page(): number {
@@ -27,15 +27,11 @@ export class ServerHistoryState implements HistoryState {
     throw new Error('getItems is not supported on server.')
   }
 
-  clearItemData(page: number): Record<string, any> {
+  clearItemData(page: number): Record<string, any> | undefined {
     throw new Error('clearItemData is not supported on server.')
   }
 
-  findBackPage(location: HistoryLocationRaw): number {
+  findBackPage(location: HistoryLocationRaw): number | undefined {
     throw new Error('findBackPosition is not supported on server.')
-  }
-
-  private _debug(marker: string) {
-    console.log(`[${marker}] _page: ${this.page}, _action: ${JSON.stringify(this._action)}`)
   }
 }
