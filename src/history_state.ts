@@ -1,7 +1,8 @@
-import { HistoryItem, HistoryLocationRaw } from './index'
-
 export class HistoryState {
-  public options: Record<string, any> = {}
+  constructor(
+    public options: Record<string, any> = {}
+  ) {
+  }
 
   get action(): string {
     return 'navigate';
@@ -34,4 +35,34 @@ export class HistoryState {
   findBackPage(location: HistoryLocationRaw): number | undefined {
     throw new Error('findBackPosition is not supported on server.')
   }
+}
+
+export declare type HistoryStateOptions = {
+  maxHistoryLength?: number
+  overrideDefaultScrollBehavior?: boolean
+  scrollingElements?: string | string[]
+  debug?: boolean
+}
+
+export declare type HistoryLocationRaw = string | {
+  pathname?: string
+  query?: Record<string, (string | number | null)[] | string | number | null>
+  hash?: string
+  partial?: boolean
+}
+
+export declare type HistoryLocation = {
+  pathname?: string
+  query?: Record<string, string[] | string>
+  hash?: string
+}
+
+export interface HistoryItem {
+  get location(): HistoryLocation
+
+  get data(): Record<string, any> | undefined
+
+  set data(value: Record<string, any> | undefined)
+
+  get scrollPositions(): Record<string, { left: number, top: number }> | undefined
 }

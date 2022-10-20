@@ -1,7 +1,6 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { HistoryState } from './history_state'
-import { HistoryStateOptions, HistoryLocation, HistoryLocationRaw, HistoryItem } from './index'
+import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem } from './history_state'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
 export class ClientHistoryState extends HistoryState {
@@ -18,10 +17,9 @@ export class ClientHistoryState extends HistoryState {
   private _popState = false
 
   constructor(
-    public options: HistoryStateOptions,
-    router: typeof Router,
+    options: HistoryStateOptions
   ) {
-    super()
+    super(options)
 
 /*
     if (Router.options.scrollBehavior) {
