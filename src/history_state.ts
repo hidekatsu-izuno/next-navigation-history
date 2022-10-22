@@ -1,7 +1,9 @@
+export declare type ActionType = "navigate" | "push" | "reload" | "back" | "forward"
+
 export interface HistoryState {
   options: Record<string, any>
 
-  get action(): string
+  get action(): ActionType
 
   get page(): number
 
@@ -37,7 +39,7 @@ export declare type HistoryLocation = {
 export interface HistoryItem {
   get location(): HistoryLocation
 
-  get data(): any
+  get data(): Record<string, any> | undefined
 
   set data(value: Record<string, any> | undefined)
 

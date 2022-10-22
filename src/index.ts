@@ -3,6 +3,8 @@ import { HistoryState, HistoryStateOptions } from './history_state'
 import { ClientHistoryState } from './history_state.client'
 import { ServerHistoryState } from './history_state.server'
 
+export * from './history_state'
+
 let historyState: HistoryState
 
 export function setupHistoryState(options: HistoryStateOptions = {}) {
@@ -15,12 +17,12 @@ export function setupHistoryState(options: HistoryStateOptions = {}) {
 
 export function useHistoryState(): HistoryState;
 export function useHistoryState<T>(
-  backup?: () => T,
-  restore?: (data: T) => void,
+  backup: () => T,
+  restore: (action: "reload" | "back" | "forward", data: T) => void,
 ): HistoryState;
-export function useHistoryState<T=any>(
+export function useHistoryState<T=Record<string, any>>(
   backup?: () => T,
-  restore?: (data: T) => void,
+  restore?: (action: "reload" | "back" | "forward", data: T) => void,
 ): HistoryState {
   if (!backup || !restore) {
     return historyState
@@ -45,7 +47,7 @@ export function useHistoryState<T=any>(
       if (instance.options.debug) {
         console.log(`restore: action=${instance.action} data=${JSON.stringify(item && item.data)}`)
       }
-      restore((item && item.data) as T)
+      restore(instance.action, (item && item.data) as T)
     }
 
     instance._register(() => {

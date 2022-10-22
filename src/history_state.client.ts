@@ -1,32 +1,30 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem } from './history_state'
+import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem, ActionType } from './history_state'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
 export class ClientHistoryState implements HistoryState {
-  private _action = 'navigate'
+  private _action: ActionType = 'navigate'
   private _page = 0
   private _items = new Array<[
     ('navigate' | 'push')?,
     (HistoryLocation)?,
-    any?,
+    (Record<string, any> | null)?,
     (Record<string, { left: number, top: number }>)?,
   ]>([])
-  private _dataFunc?: () => any
+  private _dataFunc?: () => Record<string, any>
   private _route?: HistoryLocation
   private _popState = false
 
   constructor(
     public options: HistoryStateOptions = {}
   ) {
-
-/*
-    if (Router.options.scrollBehavior) {
-      options.overrideDefaultScrollBehavior = false;
+    if (process.env.__NEXT_SCROLL_RESTORATION) {
+      options.overrideDefaultScrollBehavior = false
     } else if (options.overrideDefaultScrollBehavior == null) {
-      options.overrideDefaultScrollBehavior = true;
+      options.overrideDefaultScrollBehavior = true
     }
-*/
+
     try {
       const navType = getNavigationType()
       if (window.sessionStorage) {
@@ -136,8 +134,11 @@ export class ClientHistoryState implements HistoryState {
       return ret
     }
 
-/*
     if (this.options.overrideDefaultScrollBehavior) {
+      if (window.history.scrollRestoration) {
+        window.history.scrollRestoration = "manual"
+      }
+/*
       Router.options.scrollBehavior = async (to, from) => {
         if (to.hash) {
           return { el: to.hash }
@@ -180,8 +181,8 @@ export class ClientHistoryState implements HistoryState {
 
         return { left: 0, top: 0 }
       }
+      */
     }
-*/
   }
 
   private _enter(url: string, page: number) {
@@ -230,7 +231,7 @@ export class ClientHistoryState implements HistoryState {
     }
   }
 
-  get action(): string {
+  get action(): ActionType {
     return this._action
   }
 
@@ -357,7 +358,7 @@ class HistoryItemImpl implements HistoryItem {
     return this.item[2] ?? undefined
   }
 
-  set data(value: Record<string, unknown> | undefined) {
+  set data(value: Record<string, any> | undefined) {
     this.item[2] = value ?? null
   }
 
