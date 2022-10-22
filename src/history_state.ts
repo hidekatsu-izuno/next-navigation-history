@@ -18,7 +18,7 @@ export interface HistoryState {
 
 export declare type HistoryStateOptions = {
   maxHistoryLength?: number
-  overrideDefaultScrollBehavior?: boolean
+  overrideScrollRestoration?: boolean
   scrollingElements?: string | string[]
   debug?: boolean
 }

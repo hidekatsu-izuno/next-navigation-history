@@ -20,9 +20,9 @@ export class ClientHistoryState implements HistoryState {
     public options: HistoryStateOptions = {}
   ) {
     if (process.env.__NEXT_SCROLL_RESTORATION) {
-      options.overrideDefaultScrollBehavior = false
-    } else if (options.overrideDefaultScrollBehavior == null) {
-      options.overrideDefaultScrollBehavior = true
+      options.overrideScrollRestoration = false
+    } else if (options.overrideScrollRestoration == null) {
+      options.overrideScrollRestoration = true
     }
 
     try {
@@ -134,7 +134,7 @@ export class ClientHistoryState implements HistoryState {
       return ret
     }
 
-    if (this.options.overrideDefaultScrollBehavior) {
+    if (this.options.overrideScrollRestoration) {
       if (window.history.scrollRestoration) {
         window.history.scrollRestoration = "manual"
       }
@@ -189,7 +189,7 @@ export class ClientHistoryState implements HistoryState {
 
   /** @internal */
   async _restoreScroll() {
-    if (!this.options.overrideDefaultScrollBehavior) {
+    if (!this.options.overrideScrollRestoration) {
       return
     }
 
@@ -302,7 +302,7 @@ export class ClientHistoryState implements HistoryState {
       this._dataFunc = undefined
     }
 
-    if (this.options.overrideDefaultScrollBehavior) {
+    if (this.options.overrideScrollRestoration) {
       const positions: Record<string, { left: number, top: number }> = {}
       if (this.options.scrollingElements) {
         let scrollingElements = this.options.scrollingElements
