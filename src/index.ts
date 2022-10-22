@@ -1,3 +1,4 @@
+import { AppProps } from 'next/app'
 import { useEffect, useRef } from 'react'
 import { HistoryState, HistoryStateOptions } from './history_state'
 import { ClientHistoryState } from './history_state.client'
@@ -7,11 +8,27 @@ export * from './history_state'
 
 let historyState: HistoryState
 
-export function setupHistoryState(options: HistoryStateOptions = {}) {
-  if (typeof window === "undefined") {
-    historyState = new ServerHistoryState(options)
+export function withHistoryState(app: (props: AppProps) => JSX.Element, options: HistoryStateOptions = {}): (props: AppProps) => JSX.Element {
+  if (typeof window !== "undefined") {
+    const clientHistoryState = new ClientHistoryState(options)
+    historyState = clientHistoryState
+
+    return (props: AppProps) => {
+      if (typeof window !== "undefined" && (
+        clientHistoryState.action === 'reload' ||
+        clientHistoryState.action === 'back' ||
+        clientHistoryState.action === 'forward'
+      )) {
+        useEffect(() => {
+          clientHistoryState._restoreScroll()
+        }, [])
+      }
+      return app(props)
+    }
   } else {
-    historyState = new ClientHistoryState(options)
+    historyState = new ServerHistoryState(options)
+
+    return app
   }
 }
 
@@ -42,12 +59,13 @@ export function useHistoryState<T=Record<string, any>>(
     if (!instance) {
       throw new Error('historyStateInstance is not initialized.')
     }
-    if (instance.action === 'back' || instance.action === 'forward' || instance.action === 'reload') {
+    if (instance.action === 'reload' || instance.action === 'back' || instance.action === 'forward') {
       const item = instance.getItem(instance.page)
+      const data = (item && item.data) as T
       if (instance.options.debug) {
-        console.log(`restore: action=${instance.action} data=${JSON.stringify(item && item.data)}`)
+        console.log(`restore: action=${instance.action} data=${JSON.stringify(data)}`)
       }
-      restore(instance.action, (item && item.data) as T)
+      restore(instance.action, data)
     }
 
     instance._register(() => {
