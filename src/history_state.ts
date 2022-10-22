@@ -1,40 +1,17 @@
-export class HistoryState {
-  constructor(
-    public options: Record<string, any> = {}
-  ) {
-  }
+export interface HistoryState {
+  options: Record<string, any>
 
-  get action(): string {
-    return 'navigate';
-  }
+  get action(): string
 
-  get page(): number {
-    return 0
-  }
+  get page(): number
 
-  get data(): Record<string, any> | undefined {
-    return undefined
-  }
+  get length(): number
 
-  get length(): number {
-    throw new Error('length is not supported on server.')
-  }
+  getItem(page: number): HistoryItem | undefined
 
-  getItem(page: number): HistoryItem | undefined {
-    throw new Error('getItem is not supported on server.')
-  }
+  getItems(): Array<HistoryItem>
 
-  getItems(): Array<HistoryItem> {
-    throw new Error('getItems is not supported on server.')
-  }
-
-  clearItemData(page: number): Record<string, any> | undefined {
-    throw new Error('clearItemData is not supported on server.')
-  }
-
-  findBackPage(location: HistoryLocationRaw): number | undefined {
-    throw new Error('findBackPosition is not supported on server.')
-  }
+  findBackPage(location: HistoryLocationRaw): number | undefined
 }
 
 export declare type HistoryStateOptions = {
@@ -60,7 +37,7 @@ export declare type HistoryLocation = {
 export interface HistoryItem {
   get location(): HistoryLocation
 
-  get data(): Record<string, any> | undefined
+  get data(): any
 
   set data(value: Record<string, any> | undefined)
 

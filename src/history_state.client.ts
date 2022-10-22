@@ -3,23 +3,22 @@ import { Router } from 'next/router'
 import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem } from './history_state'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientHistoryState extends HistoryState {
+export class ClientHistoryState implements HistoryState {
   private _action = 'navigate'
   private _page = 0
   private _items = new Array<[
     ('navigate' | 'push')?,
     (HistoryLocation)?,
-    (Record<string, any> | null)?,
+    any?,
     (Record<string, { left: number, top: number }>)?,
   ]>([])
-  private _dataFuncs = new Array<() => Record<string, unknown>>()
-  private _route?: HistoryLocation = undefined
+  private _dataFunc?: () => any
+  private _route?: HistoryLocation
   private _popState = false
 
   constructor(
-    options: HistoryStateOptions
+    public options: HistoryStateOptions = {}
   ) {
-    super(options)
 
 /*
     if (Router.options.scrollBehavior) {
@@ -223,11 +222,9 @@ export class ClientHistoryState extends HistoryState {
   }
 
   /** @internal */
-  _register(fn: () => Record<string, unknown>) {
-    const index = this._dataFuncs.indexOf(fn)
-    if (index == -1) {
-      this._dataFuncs.push(fn)
-    }
+  _register(fn: () => any) {
+    this._dataFunc = fn
+
     if (this.options.debug) {
       console.log('_register')
     }
@@ -239,18 +236,6 @@ export class ClientHistoryState extends HistoryState {
 
   get page(): number {
     return this._page
-  }
-
-  get data(): Record<string, any> | undefined {
-    const item = this._items[this._page]
-    return (item && item[2]) || undefined
-  }
-
-  set data(value: Record<string, unknown> | undefined) {
-    const item = this._items[this._page]
-    if (item) {
-      item[2] = value ?? null
-    }
   }
 
   get length(): number {
@@ -275,21 +260,8 @@ export class ClientHistoryState extends HistoryState {
     return items
   }
 
-  /**
-   * @deprecated Use getItem(page).data = undefined
-   */
-  clearItemData(page: number): Record<string, any> | undefined {
-    const item = this.getItem(page)
-    if (item) {
-      const data = item.data
-      item.data = undefined
-      return data
-    }
-    return undefined
-  }
-
-  findBackPage(location: HistoryLocationRaw, partial?: boolean): number | undefined {
-    partial = typeof location === 'object' && location.partial
+  findBackPage(location: HistoryLocationRaw): number | undefined {
+    const partial = typeof location === 'object' && location.partial
 
     const action = this._items[this._page][0]
     if (action !== 'navigate') {
@@ -326,18 +298,9 @@ export class ClientHistoryState extends HistoryState {
 
     this._items[this._page][1] = this._route
 
-    if (this._dataFuncs != null) {
-      const backupData = this._dataFuncs.reduce((prev, current) => {
-        const values = current()
-        for (const key in values) {
-          if (Object.prototype.hasOwnProperty.call(values, key)) {
-            prev[key] = values[key]
-          }
-        }
-        return prev
-      }, {} as Record<string, any>)
-      this._items[this._page][2] = backupData
-      this._dataFuncs.length = 0
+    if (this._dataFunc != null) {
+      this._items[this._page][2] = this._dataFunc()
+      this._dataFunc = undefined
     }
 
     if (this.options.overrideDefaultScrollBehavior) {

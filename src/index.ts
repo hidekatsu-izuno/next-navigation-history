@@ -1,26 +1,24 @@
-import { NextConfig } from 'next'
 import { useEffect, useRef } from 'react'
 import { HistoryState, HistoryStateOptions } from './history_state'
 import { ClientHistoryState } from './history_state.client'
+import { ServerHistoryState } from './history_state.server'
 
-let historyStateInstance = new HistoryState()
+let historyState: HistoryState
 
-export function NextHistoryState(options: HistoryStateOptions = {}) {
-  if (typeof window !== 'undefined') {
-    historyStateInstance = new ClientHistoryState(options)
-  }
-
-  return function withHistoryState(config: NextConfig) {
-    return config
+export function setupHistoryState(options: HistoryStateOptions = {}) {
+  if (typeof window === "undefined") {
+    historyState = new ServerHistoryState(options)
+  } else {
+    historyState = new ClientHistoryState(options)
   }
 }
 
-export function useHistoryState<T extends Record<string, unknown>>(
+export function useHistoryState<T>(
+  backup: () => T,
   restore: (data: T) => void,
-  backup: () => T
 ) {
-  const flag = useRef(false);
-  const data = useRef({})
+  const flag = useRef(false)
+  const data = useRef<T>()
   data.current = backup()
 
   useEffect(() => {
@@ -29,15 +27,16 @@ export function useHistoryState<T extends Record<string, unknown>>(
     }
     flag.current = true
 
-    const instance = historyStateInstance as ClientHistoryState
+    const instance = historyState as ClientHistoryState
     if (!instance) {
       throw new Error('historyStateInstance is not initialized.')
     }
-    if (instance.options.debug) {
-      console.log(`restore: action=${instance.action} data=${JSON.stringify(instance.data)}`)
-    }
     if (instance.action === 'back' || instance.action === 'forward' || instance.action === 'reload') {
-      restore(instance.data as T)
+      const item = instance.getItem(instance.page)
+      if (instance.options.debug) {
+        console.log(`restore: action=${instance.action} data=${JSON.stringify(item && item.data)}`)
+      }
+      restore((item && item.data) as T)
     }
 
     instance._register(() => {
@@ -48,5 +47,5 @@ export function useHistoryState<T extends Record<string, unknown>>(
     })
   }, [])
 
-  return historyStateInstance
+  return historyState
 }
