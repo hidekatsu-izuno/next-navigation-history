@@ -10,21 +10,9 @@ let historyState: HistoryState
 
 export function withHistoryState(app: (props: AppProps) => JSX.Element, options: HistoryStateOptions = {}): (props: AppProps) => JSX.Element {
   if (typeof window !== "undefined") {
-    const clientHistoryState = new ClientHistoryState(options)
-    historyState = clientHistoryState
+    historyState = new ClientHistoryState(options)
 
-    return (props: AppProps) => {
-      if (typeof window !== "undefined" && (
-        clientHistoryState.action === 'reload' ||
-        clientHistoryState.action === 'back' ||
-        clientHistoryState.action === 'forward'
-      )) {
-        useEffect(() => {
-          clientHistoryState._restoreScroll()
-        }, [])
-      }
-      return app(props)
-    }
+    return app
   } else {
     historyState = new ServerHistoryState(options)
 
@@ -33,7 +21,7 @@ export function withHistoryState(app: (props: AppProps) => JSX.Element, options:
 }
 
 export function useHistoryState(): HistoryState;
-export function useHistoryState<T>(
+export function useHistoryState<T=Record<string, any>>(
   backup: () => T,
   restore: (action: "reload" | "back" | "forward", data: T) => void,
 ): HistoryState;
@@ -57,7 +45,7 @@ export function useHistoryState<T=Record<string, any>>(
 
     const instance = historyState as ClientHistoryState
     if (!instance) {
-      throw new Error('historyStateInstance is not initialized.')
+      throw new Error('historyState is not initialized.')
     }
     if (instance.action === 'reload' || instance.action === 'back' || instance.action === 'forward') {
       const item = instance.getItem(instance.page)
@@ -69,10 +57,11 @@ export function useHistoryState<T=Record<string, any>>(
     }
 
     instance._register(() => {
+      const backupData = data.current || {}
       if (instance.options.debug) {
-        console.log(`backup: data=${JSON.stringify(data.current)}`)
+        console.log(`backup: data=${JSON.stringify(backupData)}`)
       }
-      return data.current
+      return backupData
     })
   }, [])
 

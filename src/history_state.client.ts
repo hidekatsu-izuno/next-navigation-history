@@ -25,6 +25,12 @@ export class ClientHistoryState implements HistoryState {
       options.overrideScrollRestoration = true
     }
 
+    if (this.options.overrideScrollRestoration) {
+      if (window.history.scrollRestoration) {
+        window.history.scrollRestoration = "manual"
+      }
+    }
+
     try {
       const navType = getNavigationType()
       if (window.sessionStorage) {
@@ -135,9 +141,8 @@ export class ClientHistoryState implements HistoryState {
     }
 
     if (this.options.overrideScrollRestoration) {
-      if (window.history.scrollRestoration) {
-        window.history.scrollRestoration = "manual"
-      }
+      window.addEventListener('load', this._loaded)
+      Router.events.on('routeChangeComplete', this._loaded)
     }
   }
 
@@ -178,54 +183,57 @@ export class ClientHistoryState implements HistoryState {
     }
   }
 
+  private async _loaded() {
+    if (this.options.overrideScrollRestoration &&
+      (this.action === 'reload' || this.action === 'back' || this.action === 'forward')) {
+
+      const positions = this._items[this._page]?.[3]
+      const targets = []
+      if (positions) {
+        if (this.options.scrollingElements) {
+          let scrollingElements = this.options.scrollingElements
+          if (!Array.isArray(scrollingElements)) {
+            scrollingElements = [scrollingElements]
+          }
+
+          for (const selector of scrollingElements) {
+            const elem = document.querySelector(selector)
+            const position = positions?.[selector]
+            if (elem && position) {
+              targets.push({ elem, position })
+            }
+          }
+        }
+        if (positions.window) {
+          targets.push({ elem: window, position: positions.window })
+        }
+      } else {
+        targets.push({ elem: window, position: { left: 0, top: 0} })
+      }
+
+      for (let i = 0; i < 10; i++) {
+        if (i > 0) {
+          // wait 10ms * 10 = 100ms
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        for (const target of targets) {
+          target.elem.scrollTo(target.position.left, target.position.top)
+        }
+      }
+    }
+
+    if (this.options.debug) {
+      console.log('_loaded')
+    }
+  }
+
   /** @internal */
   _register(fn: () => any) {
     this._dataFunc = fn
 
     if (this.options.debug) {
       console.log('_register')
-    }
-  }
-
-  /** @internal */
-  async _restoreScroll() {
-    if (!this.options.overrideScrollRestoration) {
-      return
-    }
-
-    const positions = this._items[this._page]?.[3]
-    const targets = []
-    if (positions) {
-      if (this.options.scrollingElements) {
-        let scrollingElements = this.options.scrollingElements
-        if (!Array.isArray(scrollingElements)) {
-          scrollingElements = [scrollingElements]
-        }
-
-        for (const selector of scrollingElements) {
-          const elem = document.querySelector(selector)
-          const position = positions?.[selector]
-          if (elem && position) {
-            targets.push({ elem, position })
-          }
-        }
-      }
-      if (positions.window) {
-        targets.push({ elem: window, position: positions.window })
-      }
-    } else {
-      targets.push({ elem: window, position: { left: 0, top: 0} })
-    }
-
-    for (let i = 0; i < 10; i++) {
-      if (i > 0) {
-        // wait 10ms * 10 = 100ms
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-
-      for (const target of targets) {
-        target.elem.scrollTo(target.position.left, target.position.top)
-      }
     }
   }
 
