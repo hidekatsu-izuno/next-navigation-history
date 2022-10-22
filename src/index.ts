@@ -13,10 +13,19 @@ export function setupHistoryState(options: HistoryStateOptions = {}) {
   }
 }
 
+export function useHistoryState(): HistoryState;
 export function useHistoryState<T>(
-  backup: () => T,
-  restore: (data: T) => void,
-) {
+  backup?: () => T,
+  restore?: (data: T) => void,
+): HistoryState;
+export function useHistoryState<T=any>(
+  backup?: () => T,
+  restore?: (data: T) => void,
+): HistoryState {
+  if (!backup || !restore) {
+    return historyState
+  }
+
   const flag = useRef(false)
   const data = useRef<T>()
   data.current = backup()
