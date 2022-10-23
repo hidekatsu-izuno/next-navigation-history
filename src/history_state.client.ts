@@ -55,7 +55,8 @@ export class ClientHistoryState implements HistoryState {
           console.error('The saved history state is not found.')
         }
 
-        window.addEventListener('unload', event => {
+        const isMozilla = '-moz-user-select' in document.documentElement.style
+        window.addEventListener(isMozilla ? 'beforeunload' : 'unload', event => {
           this._save('unload')
 
           try {
