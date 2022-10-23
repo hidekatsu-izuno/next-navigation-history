@@ -1,6 +1,6 @@
 export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "forward"
 
-export interface HistoryState {
+export interface NavigationHistory {
   options: Record<string, any>
 
   get type(): NavigationType
@@ -20,7 +20,7 @@ export interface HistoryState {
   findBackPage(location: HistoryLocationRaw): number | undefined
 }
 
-export declare type HistoryStateOptions = {
+export declare type NavigationHistoryOptions = {
   maxHistoryLength?: number
   overrideScrollRestoration?: boolean
   scrollingElements?: string | string[]

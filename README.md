@@ -68,7 +68,7 @@ If you set this option to a selecter, it applies the scrolling to the selector, 
 
 ## Usage
 
-If you want to access backup data, you have to define a useHistoryState.
+If you want to access backup data, you have to use a useNavigationHistory.
 
 ```javascript
 import { useNavigationHistory } from 'next-navigation-history'

@@ -1,6 +1,6 @@
-import { NavigationType, HistoryItem, HistoryLocationRaw, HistoryState } from "./navigation_history"
+import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory } from "./navigation_history"
 
-export class ServerHistoryState implements HistoryState {
+export class ServerNavigationHistory implements NavigationHistory {
   constructor(
     public options: Record<string, any> = {}
   ) {

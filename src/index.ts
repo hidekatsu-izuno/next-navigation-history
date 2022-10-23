@@ -1,14 +1,14 @@
 import { AppProps } from 'next/app'
 import { useEffect, useRef } from 'react'
-import { HistoryState as NavigationHistory, HistoryStateOptions } from './navigation_history'
-import { ClientHistoryState as ClientNavigationHistory } from './navigation_history.client'
-import { ServerHistoryState as ServerNavigationHistory } from './navigation_history.server'
+import { NavigationHistory as NavigationHistory, NavigationHistoryOptions } from './navigation_history'
+import { ClientNavigationHistory as ClientNavigationHistory } from './navigation_history.client'
+import { ServerNavigationHistory as ServerNavigationHistory } from './navigation_history.server'
 
 export * from './navigation_history'
 
 let navigationHistory: NavigationHistory
 
-export function withHistoryState(app: (props: AppProps) => JSX.Element, options: HistoryStateOptions = {}): (props: AppProps) => JSX.Element {
+export function withNavigationHistory(app: (props: AppProps) => JSX.Element, options: NavigationHistoryOptions = {}): (props: AppProps) => JSX.Element {
   if (typeof window !== "undefined") {
     navigationHistory = new ClientNavigationHistory(options)
   } else {
@@ -43,7 +43,7 @@ export function useNavigationHistory<T=Record<string, any>>(
 
     const instance = navigationHistory as ClientNavigationHistory
     if (!instance) {
-      throw new Error('historyState is not initialized.')
+      throw new Error('navigationHistory is not initialized.')
     }
     if (instance.type === 'reload' || instance.type === 'back' || instance.type === 'forward') {
       const restoreState = { type: instance.type, state: instance.state as T }

@@ -1,9 +1,9 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
+import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientHistoryState implements HistoryState {
+export class ClientNavigationHistory implements NavigationHistory {
   private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
@@ -18,7 +18,7 @@ export class ClientHistoryState implements HistoryState {
   _callback?: () => Record<string, any>
 
   constructor(
-    public options: HistoryStateOptions = {}
+    public options: NavigationHistoryOptions = {}
   ) {
     if (process.env.__NEXT_SCROLL_RESTORATION) {
       options.overrideScrollRestoration = false
