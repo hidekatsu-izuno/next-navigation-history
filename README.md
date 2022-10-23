@@ -1,11 +1,11 @@
-# next-history-state
+# next-navigation-history
 
-History State Plugin for Next.js
+Navigation History Plugin for Next.js
 
 [![npm version](https://badge.fury.io/js/vue-history-state.svg)](https://badge.fury.io/js/vue-history-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Vue History State Plugin is usefull for restoring state when users press "Back" or "Foward".
+This plugin is usefull for restoring state when users press "Back", "Foward", "Reload".
 
 ## Features
 
@@ -22,20 +22,20 @@ Vue History State Plugin is usefull for restoring state when users press "Back" 
 Using npm:
 
 ```
-npm install next-history-state
+npm install next-navigation-history
 ```
 
 ## Setup
 
 ```jsx:_app.jsx
 import type { AppProps } from 'next/app'
-import { withHistoryState } from 'next-history-state'
+import { withNavigationHistory } from 'next-navigation-history'
 
 function MyApp({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />
 }
 
-export default withHistoryState(MyApp, {
+export default withNavigationHistory(MyApp, {
   ...
 })
 ```
@@ -71,32 +71,39 @@ If you set this option to a selecter, it applies the scrolling to the selector, 
 If you want to access backup data, you have to define a useHistoryState.
 
 ```javascript
-import { useHistoryState, onBackupState } from 'vue-history-state'
+import { useNavigationHistory } from 'next-navigation-history'
 
-// If you just want to get a historyState
-const historyState = useHistoryState()
+const SamplePage: NextPage = () => {
+  const [value, setValue] = useState(0)
 
-// If you want to backup and restore data
-const historyState = useHistoryState(
-  // Backup data 
-  () => ({
-    key: value
-  }),
+  // If you just want to get a navigationHistory
+  const navigationHistory = useNavigationHistory()
 
-  // Restore data 
-  ({ action, data }) => {
-    setValue(data.key)
-  }
-)
+  // If you want to backup and restore state
+  const navigationHistory = useNavigationHistory(() => {
+    // Backup state
+    return { value }
+  })
+
+  // navigationHistory is not accessible on the server side
+  useEffect(() => {
+    if (navigationHistory.state) {
+    // Restore state
+      setValue(navigationHistory.state.value)
+    }
+  }, [])
+}
+
+
 ```
 
 ## API
 
-### HistoryState
+### NavigationHistory
 
-#### action
+#### type
 
-A action type that caused a navigation.
+A navigation type.
 
 - navigate: When a new page is navigated.
 - reload: When a page is reloaded.
@@ -104,19 +111,27 @@ A action type that caused a navigation.
 - back: When a back navigation is occurred.
 - forward: When a forward navigation is occurred.
 
-This method cannot be used on server.
+This method cannot be used on the server.
 
 #### page: number
 
 A current page number (an integer beginning with 0).
 
-This method cannot be used on server.
+This method cannot be used on the server.
+
+#### state: object?
+
+A backup state.
+
+If you want to clear the backup state, you set undefined to this property.
+
+This method always returns undefined on the server.
 
 #### length: number
 
 A history length.
 
-This method cannot be used on server.
+This method cannot be used on the server.
 
 #### getItem(page): HistoryItem?
 
@@ -124,37 +139,37 @@ You can get a location and data of the specified page number.
 
 If you set 'overrideScrollRestoration' option to true, the item has scrollPositions property.
 
-This method cannot use on server.
+This method cannot use on the server.
 
 #### getItems(): HistoryItem[]
 
 You can get a list of item.
 
-This method cannot be used on server.
+This method cannot be used on the server.
 
 #### findBackPage(location): number?
 
 You can get a page number of the first matched history, 
 searching backward in the continuous same site starting at the current page.
-If a history state is not found or is not in the continuous same site, this method will return undefined.
+If a history item is not found or is not in the continuous same site, this method will return undefined.
 
 If the partial option sets true, it matches any subset of the location.
 
-This method cannot be used on server.
+This method cannot be used on the server.
 
 ```javascript
-const page = historyState.findBackPage({
+const page = navigationHistory.findBackPage({
     path: '/test'
     // hash: ...
     // query: ...
     // partial: true (default: false)
 })
 if (page != null) {
-    historyState.getItem(page).data = undefined
+    navigationHistory.getItem(page).data = undefined
 
     // go back to the page in site.
     const router = useRouter()
-    router.go(page - historyState.page)
+    router.go(page - navigationHistory.page)
 }
 ```
 
@@ -164,11 +179,11 @@ if (page != null) {
 
 A location of this saved page.
 
-#### data: object?
+#### state: object?
 
-A backup data.
+A backup state.
 
-If you want to clear the backup data, you set undefined to this property.
+If you want to clear the backup state, you set undefined to this property.
 
 #### scrollPositions: object
 

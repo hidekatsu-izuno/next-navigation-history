@@ -3,9 +3,13 @@ export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "
 export interface HistoryState {
   options: Record<string, any>
 
-  get action(): NavigationType
+  get type(): NavigationType
 
   get page(): number
+
+  get state(): Record<string, any> | undefined
+
+  set state(value: Record<string, unknown> | undefined)
 
   get length(): number
 
@@ -39,9 +43,9 @@ export declare type HistoryLocation = {
 export interface HistoryItem {
   get location(): HistoryLocation
 
-  get data(): Record<string, any> | undefined
+  get state(): Record<string, any> | undefined
 
-  set data(value: Record<string, any> | undefined)
+  set state(value: Record<string, any> | undefined)
 
   get scrollPositions(): Record<string, { left: number, top: number }> | undefined
 }

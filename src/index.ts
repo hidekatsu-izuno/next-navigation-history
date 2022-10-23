@@ -1,41 +1,39 @@
 import { AppProps } from 'next/app'
 import { useEffect, useRef } from 'react'
-import { HistoryState, HistoryStateOptions } from './history_state'
-import { ClientHistoryState } from './history_state.client'
-import { ServerHistoryState } from './history_state.server'
+import { HistoryState as NavigationHistory, HistoryStateOptions } from './navigation_history'
+import { ClientHistoryState as ClientNavigationHistory } from './navigation_history.client'
+import { ServerHistoryState as ServerNavigationHistory } from './navigation_history.server'
 
-export * from './history_state'
+export * from './navigation_history'
 
-let historyState: HistoryState
+let navigationHistory: NavigationHistory
 
 export function withHistoryState(app: (props: AppProps) => JSX.Element, options: HistoryStateOptions = {}): (props: AppProps) => JSX.Element {
   if (typeof window !== "undefined") {
-    historyState = new ClientHistoryState(options)
-
-    return app
+    navigationHistory = new ClientNavigationHistory(options)
   } else {
-    historyState = new ServerHistoryState(options)
-
-    return app
+    navigationHistory = new ServerNavigationHistory(options)
   }
+
+  return app
 }
 
-export function useHistoryState(): HistoryState;
-export function useHistoryState<T=Record<string, any>>(
+export function useNavigationHistory(): NavigationHistory;
+export function useNavigationHistory<T=Record<string, any>>(
   backup: () => T,
   restore: (event: ResotreEvent<T>) => void,
-): HistoryState;
-export function useHistoryState<T=Record<string, any>>(
+): NavigationHistory;
+export function useNavigationHistory<T=Record<string, any>>(
   backup?: () => T,
   restore?: (event: ResotreEvent<T>) => void,
-): HistoryState {
+): NavigationHistory {
   if (!backup || !restore) {
-    return historyState
+    return navigationHistory
   }
 
   const flag = useRef(false)
-  const data = useRef<T>()
-  data.current = backup()
+  const state = useRef<T>()
+  state.current = backup()
 
   useEffect(() => {
     if (typeof window === "undefined" || flag.current) {
@@ -43,32 +41,31 @@ export function useHistoryState<T=Record<string, any>>(
     }
     flag.current = true
 
-    const instance = historyState as ClientHistoryState
+    const instance = navigationHistory as ClientNavigationHistory
     if (!instance) {
       throw new Error('historyState is not initialized.')
     }
-    if (instance.action === 'reload' || instance.action === 'back' || instance.action === 'forward') {
-      const item = instance.getItem(instance.page)
-      const data = (item && item.data) as T
+    if (instance.type === 'reload' || instance.type === 'back' || instance.type === 'forward') {
+      const restoreState = { type: instance.type, state: instance.state as T }
       if (instance.options.debug) {
-        console.log(`restore: action=${instance.action} data=${JSON.stringify(data)}`)
+        console.log(`restore: type=${restoreState.type} state=${restoreState.state}`)
       }
-      restore({ action: instance.action, data })
+      restore(restoreState)
     }
 
     instance._callback = () => {
-      const backupData = data.current || {}
+      const backupState = state.current || {}
       if (instance.options.debug) {
-        console.log(`backup: data=${JSON.stringify(backupData)}`)
+        console.log(`backup: state=${JSON.stringify(backupState)}`)
       }
-      return backupData
+      return backupState
     }
   }, [])
 
-  return historyState
+  return navigationHistory
 }
 
 export declare type ResotreEvent<T=Record<string, any>> = {
-  action: "reload" | "back" | "forward"
-  data: T
+  type: "reload" | "back" | "forward"
+  state: T
 }

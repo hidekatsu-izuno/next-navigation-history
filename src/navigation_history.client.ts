@@ -1,10 +1,10 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './history_state'
+import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
 export class ClientHistoryState implements HistoryState {
-  private _action: NavigationType = 'navigate'
+  private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
     ('navigate' | 'push')?,
@@ -35,24 +35,24 @@ export class ClientHistoryState implements HistoryState {
     try {
       const navType = getNavigationType()
       if (window.sessionStorage) {
-        const backupText = sessionStorage.getItem('vue-history-state')
+        const backupText = sessionStorage.getItem('next-navigation-history')
         if (backupText) {
-          sessionStorage.removeItem('vue-history-state')
+          sessionStorage.removeItem('next-navigation-history')
           try {
             const backupState = JSON.parse(LZString.decompressFromUTF16(backupText) || '[]')
             this._page = backupState[0]
             this._items = backupState[1]
             if (navType === 'navigate') {
-              this._action = 'navigate'
+              this._type = 'navigate'
               this._page = this._page + 1
             } else {
-              this._action = 'reload'
+              this._type = 'reload'
             }
           } catch (error) {
             console.error('Failed to restore from sessionStorage.', error)
           }
         } else if (navType === 'reload') {
-          console.error('The saved history state is not found.')
+          console.error('The saved state is not found.')
         }
 
         const isMozilla = '-moz-user-select' in document.documentElement.style
@@ -60,7 +60,7 @@ export class ClientHistoryState implements HistoryState {
           this._save('unload')
 
           try {
-            sessionStorage.setItem('vue-history-state', LZString.compressToUTF16(JSON.stringify([
+            sessionStorage.setItem('next-navigation-history', LZString.compressToUTF16(JSON.stringify([
               this._page,
               this._items
             ])))
@@ -97,7 +97,7 @@ export class ClientHistoryState implements HistoryState {
       state.page = this._page + 1
       const ret = orgPushState.apply(window.history, [state, ...args])
 
-      this._action = 'push'
+      this._type = 'push'
       this._page = state.page
 
       this._enter('pushState', `${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
@@ -126,12 +126,24 @@ export class ClientHistoryState implements HistoryState {
     }
   }
 
-  get action(): NavigationType {
-    return this._action
+  get type(): NavigationType {
+    return this._type
   }
 
   get page(): number {
     return this._page
+  }
+
+  get state(): Record<string, any> | undefined {
+    const item = this._items[this._page]
+    return (item && item[2]) || undefined
+  }
+
+  set state(value: Record<string, unknown> | undefined) {
+    const item = this._items[this._page]
+    if (item) {
+      item[2] = value ?? null
+    }
   }
 
   get length(): number {
@@ -159,8 +171,8 @@ export class ClientHistoryState implements HistoryState {
   findBackPage(location: HistoryLocationRaw): number | undefined {
     const partial = typeof location === 'object' && location.partial
 
-    const action = this._items[this._page][0]
-    if (action !== 'navigate') {
+    const type = this._items[this._page][0]
+    if (type !== 'navigate') {
       const normalized = filterRoute(location)
       for (let page = this._page - 1; page >= 0; page--) {
         const backLocation = this._items[page][1]
@@ -176,8 +188,8 @@ export class ClientHistoryState implements HistoryState {
           }
         }
 
-        const backAction = this._items[page][0]
-        if (backAction === 'navigate') {
+        const backType = this._items[page][0]
+        if (backType === 'navigate') {
           break
         }
       }
@@ -190,16 +202,16 @@ export class ClientHistoryState implements HistoryState {
 
     if (page != null && page !== this._page) {
       if (page < this._page) {
-        this._action = 'back'
+        this._type = 'back'
       } else if (page > this._page) {
-        this._action = 'forward'
+        this._type = 'forward'
       }
       this._page = page
-    } else if (this._action === 'reload' && getNavigationType() === 'back_forward') {
+    } else if (this._type === 'reload' && getNavigationType() === 'back_forward') {
       if (page != null && page >= this._page) {
-        this._action = 'forward'
+        this._type = 'forward'
       } else {
-        this._action = 'back'
+        this._type = 'back'
       }
       if (page != null) {
         this._page = page
@@ -210,7 +222,7 @@ export class ClientHistoryState implements HistoryState {
       this._page = this._items.length
     }
 
-    if (this._action === 'navigate' || this._action === 'push') {
+    if (this._type === 'navigate' || this._type === 'push') {
       this._items.length = this._page + 1
       this._items[this._page] = []
     } else if (!this._items[this._page]) {
@@ -224,7 +236,7 @@ export class ClientHistoryState implements HistoryState {
 
   private async _loaded(event: string) {
     if (this.options.overrideScrollRestoration &&
-      (this.action === 'reload' || this.action === 'back' || this.action === 'forward')) {
+      (this.type === 'reload' || this.type === 'back' || this.type === 'forward')) {
 
       const positions = this._items[this._page]?.[3]
       const targets = []
@@ -268,9 +280,9 @@ export class ClientHistoryState implements HistoryState {
   }
 
   private _save(event: string) {
-    if (this._action === 'navigate') {
+    if (this._type === 'navigate') {
       this._items[this._page][0] = 'navigate'
-    } else if (this._action === 'push') {
+    } else if (this._type === 'push') {
       this._items[this._page][0] = 'push'
     }
 
@@ -312,10 +324,10 @@ export class ClientHistoryState implements HistoryState {
   }
 
   private _debug(marker: string, event: string) {
-    console.log(`[${marker}] page: ${this._page}, action: ${JSON.stringify(this._action)}, event: ${event}\n` +
+    console.log(`[${marker}] page: ${this._page}, type: ${JSON.stringify(this._type)}, event: ${event}\n` +
       this._items.reduce((prev1: unknown, current1: Array<unknown>, index) => {
         return `${prev1}  items[${index}] ` + (current1.length > 0
-          ? `action: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
+          ? `type: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
           : '\n')
       }, '')
     )
@@ -337,11 +349,11 @@ class HistoryItemImpl implements HistoryItem {
     return this.item[1] || {}
   }
 
-  get data(): Record<string, any> | undefined {
+  get state(): Record<string, any> | undefined {
     return this.item[2] ?? undefined
   }
 
-  set data(value: Record<string, any> | undefined) {
+  set state(value: Record<string, any> | undefined) {
     this.item[2] = value ?? null
   }
 

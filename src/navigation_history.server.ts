@@ -1,4 +1,4 @@
-import { NavigationType, HistoryItem, HistoryLocationRaw, HistoryState } from "./history_state"
+import { NavigationType, HistoryItem, HistoryLocationRaw, HistoryState } from "./navigation_history"
 
 export class ServerHistoryState implements HistoryState {
   constructor(
@@ -6,12 +6,20 @@ export class ServerHistoryState implements HistoryState {
   ) {
   }
 
-  get action(): NavigationType {
+  get type(): NavigationType {
     throw new Error('type is not supported on server.')
   }
 
   get page(): number {
     throw new Error('page is not supported on server.')
+  }
+
+  get state(): Record<string, any> | undefined {
+    throw new Error('data is not supported on server.')
+  }
+
+  set state(value: Record<string, unknown> | undefined) {
+    // no handle
   }
 
   get length(): number {
