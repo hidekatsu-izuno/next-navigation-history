@@ -1,6 +1,6 @@
 import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory } from "./navigation_history"
 
-export class ServerNavigationHistory implements NavigationHistory {
+export class ServerNavigationHistory<T=Record<string, any> | undefined> implements NavigationHistory<T> {
   constructor(
     public options: Record<string, any> = {}
   ) {
@@ -14,11 +14,11 @@ export class ServerNavigationHistory implements NavigationHistory {
     throw new Error('page is not supported on server.')
   }
 
-  get state(): Record<string, any> | undefined {
+  get state(): T {
     throw new Error('data is not supported on server.')
   }
 
-  set state(value: Record<string, unknown> | undefined) {
+  set state(value: T) {
     // no handle
   }
 

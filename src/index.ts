@@ -18,16 +18,14 @@ export function withNavigationHistory(app: (props: AppProps) => JSX.Element, opt
   return app
 }
 
-export function useNavigationHistory(): NavigationHistory;
+export function useNavigationHistory(): NavigationHistory<undefined>;
 export function useNavigationHistory<T=Record<string, any>>(
-  backup: () => T,
-  restore: (event: ResotreEvent<T>) => void,
-): NavigationHistory;
+  backup: () => T
+): NavigationHistory<T>;
 export function useNavigationHistory<T=Record<string, any>>(
-  backup?: () => T,
-  restore?: (event: ResotreEvent<T>) => void,
+  backup?: () => T
 ): NavigationHistory {
-  if (!backup || !restore) {
+  if (!backup) {
     return navigationHistory
   }
 
@@ -45,14 +43,6 @@ export function useNavigationHistory<T=Record<string, any>>(
     if (!instance) {
       throw new Error('navigationHistory is not initialized.')
     }
-    if (instance.type === 'reload' || instance.type === 'back' || instance.type === 'forward') {
-      const restoreState = { type: instance.type, state: instance.state as T }
-      if (instance.options.debug) {
-        console.log(`restore: type=${restoreState.type} state=${restoreState.state}`)
-      }
-      restore(restoreState)
-    }
-
     instance._callback = () => {
       const backupState = state.current || {}
       if (instance.options.debug) {
@@ -63,9 +53,4 @@ export function useNavigationHistory<T=Record<string, any>>(
   }, [])
 
   return navigationHistory
-}
-
-export declare type ResotreEvent<T=Record<string, any>> = {
-  type: "reload" | "back" | "forward"
-  state: T
 }

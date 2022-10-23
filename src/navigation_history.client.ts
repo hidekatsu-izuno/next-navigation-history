@@ -3,7 +3,7 @@ import { Router } from 'next/router'
 import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientNavigationHistory implements NavigationHistory {
+export class ClientNavigationHistory<T=Record<string, any> | undefined> implements NavigationHistory<T> {
   private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
@@ -134,12 +134,12 @@ export class ClientNavigationHistory implements NavigationHistory {
     return this._page
   }
 
-  get state(): Record<string, any> | undefined {
+  get state(): T {
     const item = this._items[this._page]
-    return (item && item[2]) || undefined
+    return ((item && item[2]) || undefined) as T
   }
 
-  set state(value: Record<string, unknown> | undefined) {
+  set state(value: T) {
     const item = this._items[this._page]
     if (item) {
       item[2] = value ?? null

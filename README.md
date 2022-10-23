@@ -165,11 +165,11 @@ const page = navigationHistory.findBackPage({
     // partial: true (default: false)
 })
 if (page != null) {
-    navigationHistory.getItem(page).data = undefined
+    // remove backup state
+    navigationHistory.getItem(page).state = undefined
 
     // go back to the page in site.
-    const router = useRouter()
-    router.go(page - navigationHistory.page)
+    window.history.go(page - navigationHistory.page)
 }
 ```
 

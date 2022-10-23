@@ -1,15 +1,15 @@
 export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "forward"
 
-export interface NavigationHistory {
+export interface NavigationHistory<T=Record<string, any> | undefined> {
   options: Record<string, any>
 
   get type(): NavigationType
 
   get page(): number
 
-  get state(): Record<string, any> | undefined
+  get state(): T
 
-  set state(value: Record<string, unknown> | undefined)
+  set state(value: T)
 
   get length(): number
 
