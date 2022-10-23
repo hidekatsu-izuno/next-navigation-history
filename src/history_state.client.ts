@@ -4,7 +4,7 @@ import { HistoryStateOptions, HistoryState, HistoryLocation, HistoryLocationRaw,
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
 export class ClientHistoryState implements HistoryState {
-  private _type: NavigationType = 'navigate'
+  private _action: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
     ('navigate' | 'push')?,
@@ -43,10 +43,10 @@ export class ClientHistoryState implements HistoryState {
             this._page = backupState[0]
             this._items = backupState[1]
             if (navType === 'navigate') {
-              this._type = 'navigate'
+              this._action = 'navigate'
               this._page = this._page + 1
             } else {
-              this._type = 'reload'
+              this._action = 'reload'
             }
           } catch (error) {
             console.error('Failed to restore from sessionStorage.', error)
@@ -97,7 +97,7 @@ export class ClientHistoryState implements HistoryState {
       state.page = this._page + 1
       const ret = orgPushState.apply(window.history, [state, ...args])
 
-      this._type = 'push'
+      this._action = 'push'
       this._page = state.page
 
       this._enter('pushState', `${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
@@ -126,8 +126,8 @@ export class ClientHistoryState implements HistoryState {
     }
   }
 
-  get type(): NavigationType {
-    return this._type
+  get action(): NavigationType {
+    return this._action
   }
 
   get page(): number {
@@ -159,8 +159,8 @@ export class ClientHistoryState implements HistoryState {
   findBackPage(location: HistoryLocationRaw): number | undefined {
     const partial = typeof location === 'object' && location.partial
 
-    const type = this._items[this._page][0]
-    if (type !== 'navigate') {
+    const action = this._items[this._page][0]
+    if (action !== 'navigate') {
       const normalized = filterRoute(location)
       for (let page = this._page - 1; page >= 0; page--) {
         const backLocation = this._items[page][1]
@@ -176,8 +176,8 @@ export class ClientHistoryState implements HistoryState {
           }
         }
 
-        const backType = this._items[page][0]
-        if (backType === 'navigate') {
+        const backAction = this._items[page][0]
+        if (backAction === 'navigate') {
           break
         }
       }
@@ -190,16 +190,16 @@ export class ClientHistoryState implements HistoryState {
 
     if (page != null && page !== this._page) {
       if (page < this._page) {
-        this._type = 'back'
+        this._action = 'back'
       } else if (page > this._page) {
-        this._type = 'forward'
+        this._action = 'forward'
       }
       this._page = page
-    } else if (this._type === 'reload' && getNavigationType() === 'back_forward') {
+    } else if (this._action === 'reload' && getNavigationType() === 'back_forward') {
       if (page != null && page >= this._page) {
-        this._type = 'forward'
+        this._action = 'forward'
       } else {
-        this._type = 'back'
+        this._action = 'back'
       }
       if (page != null) {
         this._page = page
@@ -210,7 +210,7 @@ export class ClientHistoryState implements HistoryState {
       this._page = this._items.length
     }
 
-    if (this._type === 'navigate' || this._type === 'push') {
+    if (this._action === 'navigate' || this._action === 'push') {
       this._items.length = this._page + 1
       this._items[this._page] = []
     } else if (!this._items[this._page]) {
@@ -224,7 +224,7 @@ export class ClientHistoryState implements HistoryState {
 
   private async _loaded(event: string) {
     if (this.options.overrideScrollRestoration &&
-      (this.type === 'reload' || this.type === 'back' || this.type === 'forward')) {
+      (this.action === 'reload' || this.action === 'back' || this.action === 'forward')) {
 
       const positions = this._items[this._page]?.[3]
       const targets = []
@@ -268,9 +268,9 @@ export class ClientHistoryState implements HistoryState {
   }
 
   private _save(event: string) {
-    if (this._type === 'navigate') {
+    if (this._action === 'navigate') {
       this._items[this._page][0] = 'navigate'
-    } else if (this._type === 'push') {
+    } else if (this._action === 'push') {
       this._items[this._page][0] = 'push'
     }
 
@@ -312,10 +312,10 @@ export class ClientHistoryState implements HistoryState {
   }
 
   private _debug(marker: string, event: string) {
-    console.log(`[${marker}] page: ${this._page}, type: ${JSON.stringify(this._type)}, event: ${event}\n` +
+    console.log(`[${marker}] page: ${this._page}, action: ${JSON.stringify(this._action)}, event: ${event}\n` +
       this._items.reduce((prev1: unknown, current1: Array<unknown>, index) => {
         return `${prev1}  items[${index}] ` + (current1.length > 0
-          ? `type: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
+          ? `action: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
           : '\n')
       }, '')
     )

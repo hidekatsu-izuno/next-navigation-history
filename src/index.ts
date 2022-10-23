@@ -47,13 +47,13 @@ export function useHistoryState<T=Record<string, any>>(
     if (!instance) {
       throw new Error('historyState is not initialized.')
     }
-    if (instance.type === 'reload' || instance.type === 'back' || instance.type === 'forward') {
+    if (instance.action === 'reload' || instance.action === 'back' || instance.action === 'forward') {
       const item = instance.getItem(instance.page)
       const data = (item && item.data) as T
       if (instance.options.debug) {
-        console.log(`restore: action=${instance.type} data=${JSON.stringify(data)}`)
+        console.log(`restore: action=${instance.action} data=${JSON.stringify(data)}`)
       }
-      restore({ type: instance.type, data })
+      restore({ action: instance.action, data })
     }
 
     instance._callback = () => {
@@ -69,6 +69,6 @@ export function useHistoryState<T=Record<string, any>>(
 }
 
 export declare type ResotreEvent<T=Record<string, any>> = {
-  type: "reload" | "back" | "forward"
+  action: "reload" | "back" | "forward"
   data: T
 }

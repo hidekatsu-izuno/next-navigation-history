@@ -6,7 +6,7 @@ export class ServerHistoryState implements HistoryState {
   ) {
   }
 
-  get type(): NavigationType {
+  get action(): NavigationType {
     throw new Error('type is not supported on server.')
   }
 

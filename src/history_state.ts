@@ -3,7 +3,7 @@ export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "
 export interface HistoryState {
   options: Record<string, any>
 
-  get type(): NavigationType
+  get action(): NavigationType
 
   get page(): number
 

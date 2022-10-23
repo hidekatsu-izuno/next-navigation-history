@@ -84,7 +84,7 @@ const historyState = useHistoryState(
   }),
 
   // Restore data 
-  (action, data) => {
+  ({ action, data }) => {
     setValue(data.key)
   }
 )
@@ -94,9 +94,9 @@ const historyState = useHistoryState(
 
 ### HistoryState
 
-#### type
+#### action
 
-A type that caused a navigation.
+A action type that caused a navigation.
 
 - navigate: When a new page is navigated.
 - reload: When a page is reloaded.

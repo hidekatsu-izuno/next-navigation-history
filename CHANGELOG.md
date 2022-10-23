@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [0.3.0](https://github.com/hidekatsu-izuno/next-history-state/compare/v0.2.0...v0.3.0) (2022-10-23)
 
+### ⚠ BREAKING CHANGES
+
+* A argument of the restore function is now event object.
 
 ### Bug Fixes
 
