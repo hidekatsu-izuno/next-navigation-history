@@ -2,7 +2,7 @@
 
 Navigation History Plugin for Next.js
 
-[![npm version](https://badge.fury.io/js/vue-history-state.svg)](https://badge.fury.io/js/vue-history-state)
+[![npm version](https://badge.fury.io/js/next-navigation-history.svg)](https://badge.fury.io/js/next-navigation-history)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 This plugin is usefull for restoring state when users press "Back", "Foward", "Reload".
@@ -87,9 +87,9 @@ const SamplePage: NextPage = () => {
 
   // navigationHistory is not accessible on the server side
   useEffect(() => {
-    if (navigationHistory.state) {
-    // Restore state
-      setValue(navigationHistory.state.value)
+    const state = navigationHistory.state
+    if (state) {
+      setValue1(state.value1)
     }
   }, [])
 }
@@ -194,4 +194,3 @@ A saved scroll positions. A root window is obtained with 'window' key, the other
 [MIT License](./LICENSE)
 
 Copyright (c) Hidekatsu Izuno (hidekatsu.izuno@gmail.com)
-
