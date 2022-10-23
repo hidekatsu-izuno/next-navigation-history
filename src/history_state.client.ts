@@ -12,9 +12,10 @@ export class ClientHistoryState implements HistoryState {
     (Record<string, any> | null)?,
     (Record<string, { left: number, top: number }>)?,
   ]>([])
-  private _dataFunc?: () => Record<string, any>
   private _route?: HistoryLocation
-  private _popState = false
+
+  /** @internal */
+  _callback?: () => Record<string, any>
 
   constructor(
     public options: HistoryStateOptions = {}
@@ -55,7 +56,7 @@ export class ClientHistoryState implements HistoryState {
         }
 
         window.addEventListener('unload', event => {
-          this._save()
+          this._save('unload')
 
           try {
             sessionStorage.setItem('vue-history-state', LZString.compressToUTF16(JSON.stringify([
@@ -65,10 +66,6 @@ export class ClientHistoryState implements HistoryState {
           } catch (error) {
             console.error('Failed to save to sessionStorage.', error)
           }
-
-          if (this.options.debug) {
-            this._debug('unload')
-          }
         })
       }
     } catch (error) {
@@ -77,38 +74,24 @@ export class ClientHistoryState implements HistoryState {
 
     if (getNavigationType() === 'back_forward') {
       // back or forward from other site
-      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, window.history.state.page)
+      this._enter('constructor', `${location.pathname || ''}${location.search || ''}${location.hash || ''}`, window.history.state.page)
     } else {
       // navigate or reloaded
-      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
+      this._enter('constructor', `${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this._page)
     }
-
-    // back or forwared from same site
-    window.addEventListener('popstate', event => {
-      this._popState = true
-
-      if (this.options.debug) {
-        console.log(`popstate: page=${event.state?.page}`)
-      }
-    })
 
     // back, forward
     Router.events.on('beforeHistoryChange', (url, { shallow }) => {
-      if (this._popState) {
-        this._save()
-        this._enter(url, window.history.state.page)
-        this._popState = false
-      }
-
-      if (this.options.debug) {
-        console.log(`beforeHistoryChange: url=${url}`)
+      if (this._page !== window.history.state?.page) {
+        this._save('beforeHistoryChange')
+        this._enter('beforeHistoryChange', url, window.history.state.page)
       }
     })
 
     // push
     const orgPushState = window.history.pushState
     window.history.pushState = (state, ...args) => {
-      this._save()
+      this._save('pushState')
 
       state.page = this._page + 1
       const ret = orgPushState.apply(window.history, [state, ...args])
@@ -116,11 +99,7 @@ export class ClientHistoryState implements HistoryState {
       this._action = 'push'
       this._page = state.page
 
-      this._enter(`${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
-
-      if (this.options.debug) {
-        console.log(`pushState: page=${state.page}`)
-      }
+      this._enter('pushState', `${location.pathname || ''}${location.search || ''}${location.hash || ''}`, this.page)
 
       return ret
     }
@@ -134,106 +113,15 @@ export class ClientHistoryState implements HistoryState {
       const ret = orgReplaceState.apply(window.history, [state, ...args])
 
       if (this.options.debug) {
-        console.log(`replaceState: page=${state.page}`)
+        console.log(`replaceState: page=${this._page} stote.page=${state?.page}`)
       }
 
       return ret
     }
 
     if (this.options.overrideScrollRestoration) {
-      window.addEventListener('load', this._loaded)
-      Router.events.on('routeChangeComplete', this._loaded)
-    }
-  }
-
-  private _enter(url: string, page: number) {
-    this._route = filterRoute(url)
-
-    if (page != null && page !== this._page) {
-      if (page < this._page) {
-        this._action = 'back'
-      } else if (page > this._page) {
-        this._action = 'forward'
-      }
-      this._page = page
-    } else if (this._action === 'reload' && getNavigationType() === 'back_forward') {
-      if (page != null && page >= this._page) {
-        this._action = 'forward'
-      } else {
-        this._action = 'back'
-      }
-      if (page != null) {
-        this._page = page
-      }
-    }
-
-    if (this._page > this._items.length) {
-      this._page = this._items.length
-    }
-
-    if (this._action === 'navigate' || this._action === 'push') {
-      this._items.length = this._page + 1
-      this._items[this._page] = []
-    } else if (!this._items[this._page]) {
-      this._items[this._page] = []
-    }
-
-    if (this.options.debug) {
-      this._debug('afterRouteChange')
-    }
-  }
-
-  private async _loaded() {
-    if (this.options.overrideScrollRestoration &&
-      (this.action === 'reload' || this.action === 'back' || this.action === 'forward')) {
-
-      const positions = this._items[this._page]?.[3]
-      const targets = []
-      if (positions) {
-        if (this.options.scrollingElements) {
-          let scrollingElements = this.options.scrollingElements
-          if (!Array.isArray(scrollingElements)) {
-            scrollingElements = [scrollingElements]
-          }
-
-          for (const selector of scrollingElements) {
-            const elem = document.querySelector(selector)
-            const position = positions?.[selector]
-            if (elem && position) {
-              targets.push({ elem, position })
-            }
-          }
-        }
-        if (positions.window) {
-          targets.push({ elem: window, position: positions.window })
-        }
-      } else {
-        targets.push({ elem: window, position: { left: 0, top: 0} })
-      }
-
-      for (let i = 0; i < 10; i++) {
-        if (i > 0) {
-          // wait 10ms * 10 = 100ms
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-
-        for (const target of targets) {
-          target.elem.scrollTo(target.position.left, target.position.top)
-        }
-      }
-    }
-
-    if (this.options.debug) {
-      console.log('_loaded')
-    }
-  }
-
-  /** @internal */
-  _register(fn: () => any) {
-    this._dataFunc = fn
-
-    if (this.options.debug) {
-      console.log('_register')
+      window.addEventListener('load', () => this._loaded('load'))
+      Router.events.on('routeChangeComplete', () => this._loaded('routeChangeComplete'))
     }
   }
 
@@ -296,7 +184,89 @@ export class ClientHistoryState implements HistoryState {
     return undefined
   }
 
-  private _save() {
+  private _enter(event: string, url: string, page: number) {
+    this._route = filterRoute(url)
+
+    if (page != null && page !== this._page) {
+      if (page < this._page) {
+        this._action = 'back'
+      } else if (page > this._page) {
+        this._action = 'forward'
+      }
+      this._page = page
+    } else if (this._action === 'reload' && getNavigationType() === 'back_forward') {
+      if (page != null && page >= this._page) {
+        this._action = 'forward'
+      } else {
+        this._action = 'back'
+      }
+      if (page != null) {
+        this._page = page
+      }
+    }
+
+    if (this._page > this._items.length) {
+      this._page = this._items.length
+    }
+
+    if (this._action === 'navigate' || this._action === 'push') {
+      this._items.length = this._page + 1
+      this._items[this._page] = []
+    } else if (!this._items[this._page]) {
+      this._items[this._page] = []
+    }
+
+    if (this.options.debug) {
+      this._debug('_enter', event)
+    }
+  }
+
+  private async _loaded(event: string) {
+    if (this.options.overrideScrollRestoration &&
+      (this.action === 'reload' || this.action === 'back' || this.action === 'forward')) {
+
+      const positions = this._items[this._page]?.[3]
+      const targets = []
+      if (positions) {
+        if (this.options.scrollingElements) {
+          let scrollingElements = this.options.scrollingElements
+          if (!Array.isArray(scrollingElements)) {
+            scrollingElements = [scrollingElements]
+          }
+
+          for (const selector of scrollingElements) {
+            const elem = document.querySelector(selector)
+            const position = positions?.[selector]
+            if (elem && position) {
+              targets.push({ elem, position })
+            }
+          }
+        }
+        if (positions.window) {
+          targets.push({ elem: window, position: positions.window })
+        }
+      } else {
+        targets.push({ elem: window, position: { left: 0, top: 0} })
+      }
+
+      for (let i = 0; i < 10; i++) {
+        if (i > 0) {
+          // wait 10ms * 10 = 100ms
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        for (const target of targets) {
+          target.elem.scrollTo(target.position.left, target.position.top)
+        }
+      }
+    }
+
+    if (this.options.debug) {
+      this._debug('_loaded', event)
+    }
+  }
+
+  private _save(event: string) {
     if (this._action === 'navigate') {
       this._items[this._page][0] = 'navigate'
     } else if (this._action === 'push') {
@@ -305,9 +275,9 @@ export class ClientHistoryState implements HistoryState {
 
     this._items[this._page][1] = this._route
 
-    if (this._dataFunc != null) {
-      this._items[this._page][2] = this._dataFunc()
-      this._dataFunc = undefined
+    if (this._callback != null) {
+      this._items[this._page][2] = this._callback()
+      this._callback = undefined
     }
 
     if (this.options.overrideScrollRestoration) {
@@ -334,12 +304,18 @@ export class ClientHistoryState implements HistoryState {
         this._items[page] = []
       }
     }
+
+    if (this.options.debug) {
+      this._debug('_save', event)
+    }
   }
 
-  private _debug(marker: string) {
-    console.log(`[${marker}] page: ${this._page}, action: ${JSON.stringify(this._action)}, route: ${JSON.stringify(this._route)}\n` +
+  private _debug(marker: string, event: string) {
+    console.log(`[${marker}] page: ${this._page}, action: ${JSON.stringify(this._action)}, event: ${event}\n` +
       this._items.reduce((prev1: unknown, current1: Array<unknown>, index) => {
-        return `${prev1}  items[${index}] action: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
+        return `${prev1}  items[${index}] ` + (current1.length > 0
+          ? `action: ${JSON.stringify(current1[0])}, route: ${JSON.stringify(current1[1])}, data: ${JSON.stringify(current1[2])}, scrollPositions: ${JSON.stringify(current1[3])}\n`
+          : '\n')
       }, '')
     )
   }

@@ -23,11 +23,11 @@ export function withHistoryState(app: (props: AppProps) => JSX.Element, options:
 export function useHistoryState(): HistoryState;
 export function useHistoryState<T=Record<string, any>>(
   backup: () => T,
-  restore: (action: "reload" | "back" | "forward", data: T) => void,
+  restore: (context: { action: "reload" | "back" | "forward", data: T }) => void,
 ): HistoryState;
 export function useHistoryState<T=Record<string, any>>(
   backup?: () => T,
-  restore?: (action: "reload" | "back" | "forward", data: T) => void,
+  restore?: (context: { action: "reload" | "back" | "forward", data: T }) => void,
 ): HistoryState {
   if (!backup || !restore) {
     return historyState
@@ -53,16 +53,16 @@ export function useHistoryState<T=Record<string, any>>(
       if (instance.options.debug) {
         console.log(`restore: action=${instance.action} data=${JSON.stringify(data)}`)
       }
-      restore(instance.action, data)
+      restore({ action: instance.action, data })
     }
 
-    instance._register(() => {
+    instance._callback = () => {
       const backupData = data.current || {}
       if (instance.options.debug) {
         console.log(`backup: data=${JSON.stringify(backupData)}`)
       }
       return backupData
-    })
+    }
   }, [])
 
   return historyState
