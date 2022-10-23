@@ -1,6 +1,6 @@
 {
   "name": "next-history-state",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "History State Module for Next.js",
   "main": "lib/index.js",
   "types": "types/index.d.ts",
