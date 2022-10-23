@@ -94,9 +94,9 @@ const historyState = useHistoryState(
 
 ### HistoryState
 
-#### action
+#### type
 
-A action type that caused a navigation.
+A type that caused a navigation.
 
 - navigate: When a new page is navigated.
 - reload: When a page is reloaded.

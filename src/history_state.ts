@@ -1,9 +1,9 @@
-export declare type ActionType = "navigate" | "push" | "reload" | "back" | "forward"
+export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "forward"
 
 export interface HistoryState {
   options: Record<string, any>
 
-  get action(): ActionType
+  get type(): NavigationType
 
   get page(): number
 

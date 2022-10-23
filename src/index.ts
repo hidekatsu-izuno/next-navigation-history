@@ -23,11 +23,11 @@ export function withHistoryState(app: (props: AppProps) => JSX.Element, options:
 export function useHistoryState(): HistoryState;
 export function useHistoryState<T=Record<string, any>>(
   backup: () => T,
-  restore: (context: { action: "reload" | "back" | "forward", data: T }) => void,
+  restore: (event: ResotreEvent<T>) => void,
 ): HistoryState;
 export function useHistoryState<T=Record<string, any>>(
   backup?: () => T,
-  restore?: (context: { action: "reload" | "back" | "forward", data: T }) => void,
+  restore?: (event: ResotreEvent<T>) => void,
 ): HistoryState {
   if (!backup || !restore) {
     return historyState
@@ -47,13 +47,13 @@ export function useHistoryState<T=Record<string, any>>(
     if (!instance) {
       throw new Error('historyState is not initialized.')
     }
-    if (instance.action === 'reload' || instance.action === 'back' || instance.action === 'forward') {
+    if (instance.type === 'reload' || instance.type === 'back' || instance.type === 'forward') {
       const item = instance.getItem(instance.page)
       const data = (item && item.data) as T
       if (instance.options.debug) {
-        console.log(`restore: action=${instance.action} data=${JSON.stringify(data)}`)
+        console.log(`restore: action=${instance.type} data=${JSON.stringify(data)}`)
       }
-      restore({ action: instance.action, data })
+      restore({ type: instance.type, data })
     }
 
     instance._callback = () => {
@@ -66,4 +66,9 @@ export function useHistoryState<T=Record<string, any>>(
   }, [])
 
   return historyState
+}
+
+export declare type ResotreEvent<T=Record<string, any>> = {
+  type: "reload" | "back" | "forward"
+  data: T
 }
