@@ -18,6 +18,20 @@ export interface NavigationHistory<T=Record<string, any> | undefined> {
   getItems(): Array<HistoryItem>
 
   findBackPage(location: HistoryLocationRaw): number | undefined
+
+  push(url: string, info?: any): void
+
+  reload(url: string, info?: any): void
+
+  get canGoBack(): boolean
+
+  back(info?: any): void
+
+  get canGoForward(): boolean
+
+  forward(info?: any): void
+
+  goToPage(page: number, info?: any): void
 }
 
 export declare type NavigationHistoryOptions = {
