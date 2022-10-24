@@ -11,6 +11,8 @@ export interface NavigationHistory<T=Record<string, any> | undefined> {
 
   set state(value: T)
 
+  get info(): any | undefined
+
   get length(): number
 
   getItem(page: number): HistoryItem | undefined

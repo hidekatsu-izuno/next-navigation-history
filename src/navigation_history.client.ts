@@ -14,7 +14,7 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
   ]>([])
   private _route?: HistoryLocation
   private _nextInfo?: NextInfo
-  private _info: any
+  private _info?: any
 
   /** @internal */
   _callback?: () => Record<string, any>
@@ -150,6 +150,10 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
     if (item) {
       item[2] = value ?? null
     }
+  }
+
+  get info(): any | undefined {
+    return this._info
   }
 
   get length(): number {

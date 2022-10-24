@@ -22,6 +22,10 @@ export class ServerNavigationHistory<T=Record<string, any> | undefined> implemen
     // no handle
   }
 
+  get info() {
+    throw new Error('info is not supported on server.')
+  }
+
   get length(): number {
     throw new Error('length is not supported on server.')
   }
