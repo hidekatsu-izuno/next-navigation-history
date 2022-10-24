@@ -1,9 +1,9 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
+import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType, NavigationHistoryInternal } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientNavigationHistory implements NavigationHistory {
+export class ClientNavigationHistory implements NavigationHistory, NavigationHistoryInternal {
   private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
@@ -162,49 +162,6 @@ export class ClientNavigationHistory implements NavigationHistory {
     return this._page + 1 < this._items.length
   }
 
-  canGoToPage(page: number) {
-    if (page < 0 && page >= this._items.length) {
-      return false
-    }
-
-    if (page < this._page) {
-      for (let p = this._page; p >= page; p--) {
-        const type = this._items[p][0]
-        if (type === 'navigate') {
-          return false
-        }
-      }
-    } else if (page > this._page) {
-      for (let p = this._page + 1; p < page; p++) {
-        const type = this._items[p][0]
-        if (type === 'navigate') {
-          return false
-        }
-      }
-    }
-
-    return true
-  }
-
-  setNextInfo(type: string, info: any) {
-    if (info === undefined) {
-      return
-    }
-
-    let page = this._page
-    if (type === 'push' || type === 'forward') {
-      page = page + 1
-    } else if (type === 'back') {
-      page = page - 1
-    }
-
-    this._nextInfo = { page, type, info }
-  }
-
-  onBackup(callback: () => Record<string, any>) {
-    this._callback = callback
-  }
-
   get length(): number {
     return this._items.length
   }
@@ -254,6 +211,52 @@ export class ClientNavigationHistory implements NavigationHistory {
       }
     }
     return undefined
+  }
+
+  /** @internal */
+  _canGoToPage(page: number) {
+    if (page < 0 && page >= this._items.length) {
+      return false
+    }
+
+    if (page < this._page) {
+      for (let p = this._page; p >= page; p--) {
+        const type = this._items[p][0]
+        if (type === 'navigate') {
+          return false
+        }
+      }
+    } else if (page > this._page) {
+      for (let p = this._page + 1; p < page; p++) {
+        const type = this._items[p][0]
+        if (type === 'navigate') {
+          return false
+        }
+      }
+    }
+
+    return true
+  }
+
+  /** @internal */
+  _setNextInfo(type: string, info: any) {
+    if (info === undefined) {
+      return
+    }
+
+    let page = this._page
+    if (type === 'push' || type === 'forward') {
+      page = page + 1
+    } else if (type === 'back') {
+      page = page - 1
+    }
+
+    this._nextInfo = { page, type, info }
+  }
+
+  /** @internal */
+  _onBackup(callback: () => Record<string, any>) {
+    this._callback = callback
   }
 
   private _enter(event: string, url: string, page: number) {

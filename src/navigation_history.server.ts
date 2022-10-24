@@ -1,6 +1,6 @@
-import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory } from "./navigation_history"
+import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory, NavigationHistoryInternal } from "./navigation_history"
 
-export class ServerNavigationHistory implements NavigationHistory {
+export class ServerNavigationHistory implements NavigationHistory, NavigationHistoryInternal {
   constructor(
     public options: Record<string, any> = {}
   ) {
@@ -34,18 +34,6 @@ export class ServerNavigationHistory implements NavigationHistory {
     throw new Error('canGoForward is not supported on server.')
   }
 
-  canGoToPage(): boolean {
-    throw new Error('canGoToPage is not supported on server.')
-  }
-
-  setNextInfo(type: string, info: any) {
-    throw new Error('setNextInfo is not supported on server.')
-  }
-
-  onBackup(callback: () => Record<string, any>): void {
-    throw new Error('onBackup is not supported on server.')
-  }
-
   get length(): number {
     throw new Error('length is not supported on server.')
   }
@@ -60,5 +48,20 @@ export class ServerNavigationHistory implements NavigationHistory {
 
   findBackPage(location: HistoryLocationRaw): number | undefined {
     throw new Error('findBackPosition is not supported on server.')
+  }
+
+  /** @internal */
+  _canGoToPage(): boolean {
+    throw new Error('canGoToPage is not supported on server.')
+  }
+
+  /** @internal */
+  _setNextInfo(type: string, info: any) {
+    throw new Error('setNextInfo is not supported on server.')
+  }
+
+  /** @internal */
+  _onBackup(callback: () => Record<string, any>): void {
+    throw new Error('onBackup is not supported on server.')
   }
 }

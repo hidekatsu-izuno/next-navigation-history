@@ -7,21 +7,15 @@ export interface NavigationHistory {
 
   get page(): number
 
-  get state(): Record<string, any> | undefined
+  get state(): any | undefined
 
-  set state(value: Record<string, any> | undefined)
+  set state(value: any | undefined)
 
   get info(): any | undefined
 
   get canGoBack(): boolean
 
   get canGoForward(): boolean
-
-  canGoToPage(page: number): boolean
-
-  setNextInfo(type: string, info: any): void
-
-  onBackup(callback: () => Record<string, any>): void
 
   get length(): number
 
@@ -30,6 +24,12 @@ export interface NavigationHistory {
   getItems(): Array<HistoryItem>
 
   findBackPage(location: HistoryLocationRaw): number | undefined
+}
+
+export interface NavigationHistoryInternal extends NavigationHistory {
+  _canGoToPage(page: number): boolean
+  _setNextInfo(type: string, info: any): void
+  _onBackup(callback: () => Record<string, any>): void
 }
 
 export declare type NavigationHistoryOptions = {
