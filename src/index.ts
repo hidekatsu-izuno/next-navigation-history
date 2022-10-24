@@ -72,6 +72,12 @@ export class NavigationHistory<T=any> {
     return globalNavigationHistory.type
   }
 
+  get visited(): boolean {
+    return globalNavigationHistory.type === 'back' ||
+      globalNavigationHistory.type === 'forward' ||
+      globalNavigationHistory.type === 'reload'
+  }
+
   get state(): T | undefined {
     return globalNavigationHistory.state as T
   }
