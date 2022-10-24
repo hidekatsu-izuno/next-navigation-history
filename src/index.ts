@@ -136,14 +136,19 @@ export class NavigationHistory<T=any> {
     if (info !== undefined) {
       globalNavigationHistory._setNextInfo('back', info)
     }
-    window.history.back()
+    this.router.back()
   }
 
   forward(info?: any)  {
     if (info !== undefined) {
       globalNavigationHistory._setNextInfo('forward', info)
     }
-    window.history.forward()
+    const forward = (this.router as any).forward
+    if (forward) {
+      return forward()
+    } else {
+      window.history.forward()
+    }
   }
 
   goToPage(page: number, info?: any) {
@@ -161,6 +166,17 @@ export class NavigationHistory<T=any> {
         globalNavigationHistory._setNextInfo('forward', info)
       }
       window.history.go(page - globalNavigationHistory.page)
+    }
+  }
+
+  prefetch(href: string) {
+    return this.router.prefetch(href)
+  }
+
+  refresh() {
+    const refresh = (this.router as any).refresh
+    if (refresh) {
+      refresh()
     }
   }
 }
