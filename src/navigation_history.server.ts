@@ -1,6 +1,6 @@
-import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory, NavigationHistoryInternal } from "./navigation_history"
+import { NavigationType, HistoryItem, HistoryLocationRaw, GlobalNavigationHistory } from "./navigation_history"
 
-export class ServerNavigationHistory implements NavigationHistory, NavigationHistoryInternal {
+export class ServerNavigationHistory implements GlobalNavigationHistory {
   constructor(
     public options: Record<string, any> = {}
   ) {
@@ -14,15 +14,15 @@ export class ServerNavigationHistory implements NavigationHistory, NavigationHis
     throw new Error('page is not supported on server.')
   }
 
-  get state(): Record<string, any> | undefined {
+  get state(): any | undefined {
     throw new Error('state is not supported on server.')
   }
 
-  set state(value: Record<string, any> | undefined) {
+  set state(value: any | undefined) {
     throw new Error('state is not supported on server.')
   }
 
-  get info() {
+  get info(): any | undefined {
     throw new Error('info is not supported on server.')
   }
 
@@ -48,6 +48,10 @@ export class ServerNavigationHistory implements NavigationHistory, NavigationHis
 
   findBackPage(location: HistoryLocationRaw): number | undefined {
     throw new Error('findBackPosition is not supported on server.')
+  }
+
+  findForwardPage(location: HistoryLocationRaw): number | undefined {
+    throw new Error('findForwardPage is not supported on server.')
   }
 
   /** @internal */

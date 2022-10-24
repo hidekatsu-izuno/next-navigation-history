@@ -1,15 +1,15 @@
 import LZString from 'lz-string'
 import { Router } from 'next/router'
-import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType, NavigationHistoryInternal } from './navigation_history'
+import { NavigationHistoryOptions, GlobalNavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientNavigationHistory implements NavigationHistory, NavigationHistoryInternal {
+export class ClientNavigationHistory implements GlobalNavigationHistory {
   private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
     ('navigate' | 'push')?,
     (HistoryLocation)?,
-    (Record<string, any> | null)?,
+    any?,
     (Record<string, { left: number, top: number }>)?,
   ]>([])
   private _route?: HistoryLocation
@@ -138,12 +138,12 @@ export class ClientNavigationHistory implements NavigationHistory, NavigationHis
     return this._page
   }
 
-  get state(): Record<string, any> | undefined {
+  get state(): any | undefined {
     const item = this._items[this._page]
     return (item && item[2]) || undefined
   }
 
-  set state(value: Record<string, any> | undefined) {
+  set state(value: any | undefined) {
     const item = this._items[this._page]
     if (item) {
       item[2] = value ?? null
@@ -207,6 +207,32 @@ export class ClientNavigationHistory implements NavigationHistory, NavigationHis
         const backType = this._items[p][0]
         if (backType === 'navigate') {
           break
+        }
+      }
+    }
+    return undefined
+  }
+
+  findForwardPage(location: HistoryLocationRaw): number | undefined {
+    const partial = typeof location === 'object' && location.partial
+
+    const normalized = filterRoute(location)
+    for (let p = this._page + 1; p < this._items.length; p++) {
+      const forwardType = this._items[p][0]
+      if (forwardType === 'navigate') {
+        break
+      }
+
+      const fowardLocation = this._items[p][1]
+      if (fowardLocation) {
+        if (partial) {
+          if (isMatchedRoute(fowardLocation, normalized)) {
+            return p
+          }
+        } else {
+          if (isSameRoute(fowardLocation, normalized)) {
+            return p
+          }
         }
       }
     }

@@ -1,6 +1,6 @@
 export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "forward"
 
-export interface NavigationHistory {
+export interface GlobalNavigationHistory {
   options: Record<string, any>
 
   get type(): NavigationType
@@ -17,6 +17,12 @@ export interface NavigationHistory {
 
   get canGoForward(): boolean
 
+  _canGoToPage(page: number): boolean
+
+  _setNextInfo(type: string, info: any): void
+
+  _onBackup(callback: () => Record<string, any>): void
+
   get length(): number
 
   getItem(page: number): HistoryItem | undefined
@@ -24,12 +30,8 @@ export interface NavigationHistory {
   getItems(): Array<HistoryItem>
 
   findBackPage(location: HistoryLocationRaw): number | undefined
-}
 
-export interface NavigationHistoryInternal extends NavigationHistory {
-  _canGoToPage(page: number): boolean
-  _setNextInfo(type: string, info: any): void
-  _onBackup(callback: () => Record<string, any>): void
+  findForwardPage(location: HistoryLocationRaw): number | undefined
 }
 
 export declare type NavigationHistoryOptions = {
@@ -55,9 +57,9 @@ export declare type HistoryLocation = {
 export interface HistoryItem {
   get location(): HistoryLocation
 
-  get state(): Record<string, any> | undefined
+  get state(): any | undefined
 
-  set state(value: Record<string, any> | undefined)
+  set state(value: any | undefined)
 
   get scrollPositions(): Record<string, { left: number, top: number }> | undefined
 }

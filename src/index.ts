@@ -1,12 +1,11 @@
 import { AppProps } from 'next/app'
 import { NextRouter, useRouter } from 'next/router'
 import { useEffect, useRef, useMemo } from 'react'
-import { NavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType, NavigationHistoryInternal } from './navigation_history'
+import { GlobalNavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType } from './navigation_history'
 import { ClientNavigationHistory } from './navigation_history.client'
 import { ServerNavigationHistory } from './navigation_history.server'
 
 export {
-  NavigationHistory,
   NavigationHistoryOptions,
   HistoryLocationRaw,
   HistoryLocation,
@@ -14,24 +13,25 @@ export {
   NavigationType
 }
 
-let navigationHistory: NavigationHistoryInternal
+let globalNavigationHistory: GlobalNavigationHistory
 
 export function withNavigationHistory(app: (props: AppProps) => JSX.Element, options: NavigationHistoryOptions = {}): (props: AppProps) => JSX.Element {
   if (typeof window !== "undefined") {
-    navigationHistory = new ClientNavigationHistory(options)
+    globalNavigationHistory = new ClientNavigationHistory(options)
   } else {
-    navigationHistory = new ServerNavigationHistory(options)
+    globalNavigationHistory = new ServerNavigationHistory(options)
   }
   return app
 }
 
-/**
- * @deprecated use useNavigationRouter
- */
-export function useNavigationHistory(): NavigationHistory;
-export function useNavigationHistory<T extends Record<string, any>>(
+export function useNavigationHistory<T=any>(
   backup?: () => T
-): NavigationHistory {
+): NavigationHistory<T> {
+  const router = useRouter()
+  const navigationHistory = useMemo(() => {
+    return  new NavigationHistory<T>(router)
+  }, [router])
+
   if (backup) {
     const flag = useRef(false)
     const state = useRef<T>()
@@ -43,7 +43,7 @@ export function useNavigationHistory<T extends Record<string, any>>(
       }
       flag.current = true
 
-      const instance = navigationHistory as ClientNavigationHistory
+      const instance = globalNavigationHistory
       if (!instance) {
         throw new Error('navigationHistory is not initialized.')
       }
@@ -60,131 +60,99 @@ export function useNavigationHistory<T extends Record<string, any>>(
   return navigationHistory
 }
 
-export function useNavigationRouter<T extends Record<string, any>>(
-  backup?: () => T
-): NavigationRouter<T> {
-  const router = useRouter()
-  const navigationRouter = useMemo(() => {
-    return  new NavigationRouter<T>(router)
-  }, [router])
-
-  if (backup) {
-    const flag = useRef(false)
-    const state = useRef<T>()
-    state.current = backup()
-
-    useEffect(() => {
-      if (typeof window === "undefined" || flag.current) {
-        return
-      }
-      flag.current = true
-
-      const instance = navigationHistory as ClientNavigationHistory
-      if (!instance) {
-        throw new Error('navigationHistory is not initialized.')
-      }
-      instance._onBackup(() => {
-        const backupState = state.current || {}
-        if (instance.options.debug) {
-          console.log(`backup: state=${JSON.stringify(backupState)}`)
-        }
-        return backupState
-      })
-    }, [])
-  }
-
-  return navigationRouter
-}
-
-export class NavigationRouter<T=any> {
+export class NavigationHistory<T=any> {
   constructor(
     private router: NextRouter
   ) {
   }
 
   get type(): NavigationType {
-    return navigationHistory.type
+    return globalNavigationHistory.type
   }
 
   get state(): T | undefined {
-    return navigationHistory.state as T
+    return globalNavigationHistory.state as T
   }
 
   set state(value: T | undefined) {
-    navigationHistory.state = value
+    globalNavigationHistory.state = value
   }
 
   get info(): any | undefined {
-    return navigationHistory.info
+    return globalNavigationHistory.info
   }
 
   get canGoBack() {
-    return navigationHistory.canGoBack
+    return globalNavigationHistory.canGoBack
   }
 
   get canGoForward() {
-    return navigationHistory.canGoForward
+    return globalNavigationHistory.canGoForward
   }
 
   get length(): number {
-    return navigationHistory.length
+    return globalNavigationHistory.length
   }
 
   getItem(page: number) {
-    return navigationHistory.getItem(page)
+    return globalNavigationHistory.getItem(page)
   }
 
   getItems() {
-    return navigationHistory.getItems()
+    return globalNavigationHistory.getItems()
   }
 
   findBackPage(location: HistoryLocationRaw) {
-    return navigationHistory.findBackPage(location)
+    return globalNavigationHistory.findBackPage(location)
+  }
+
+  findForwardPage(location: HistoryLocationRaw) {
+    return globalNavigationHistory.findForwardPage(location)
   }
 
   push(url: string, info?: any) {
     if (info !== undefined) {
-      navigationHistory._setNextInfo('push', info)
+      globalNavigationHistory._setNextInfo('push', info)
     }
     this.router.push(url)
   }
 
   reload(info?: any) {
     if (info !== undefined) {
-      navigationHistory._setNextInfo('reload', info)
+      globalNavigationHistory._setNextInfo('reload', info)
     }
     window.location.reload()
   }
 
   back(info?: any) {
     if (info !== undefined) {
-      navigationHistory._setNextInfo('back', info)
+      globalNavigationHistory._setNextInfo('back', info)
     }
     window.history.back()
   }
 
   forward(info?: any)  {
     if (info !== undefined) {
-      navigationHistory._setNextInfo('forward', info)
+      globalNavigationHistory._setNextInfo('forward', info)
     }
     window.history.forward()
   }
 
   goToPage(page: number, info?: any) {
-    if (!navigationHistory._canGoToPage(page)) {
+    if (!globalNavigationHistory._canGoToPage(page)) {
       throw new RangeError(`The page is out of range: ${page}`)
     }
 
-    if (page < navigationHistory.page) {
+    if (page < globalNavigationHistory.page) {
       if (info !== undefined) {
-        navigationHistory._setNextInfo('back', info)
+        globalNavigationHistory._setNextInfo('back', info)
       }
-      window.history.go(page - navigationHistory.page)
-    } else if (page > navigationHistory.page) {
+      window.history.go(page - globalNavigationHistory.page)
+    } else if (page > globalNavigationHistory.page) {
       if (info !== undefined) {
-        navigationHistory._setNextInfo('forward', info)
+        globalNavigationHistory._setNextInfo('forward', info)
       }
-      window.history.go(page - navigationHistory.page)
+      window.history.go(page - globalNavigationHistory.page)
     }
   }
 }
