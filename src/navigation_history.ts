@@ -1,17 +1,27 @@
 export declare type NavigationType = "navigate" | "push" | "reload" | "back" | "forward"
 
-export interface NavigationHistory<T=Record<string, any> | undefined> {
+export interface NavigationHistory {
   options: Record<string, any>
 
   get type(): NavigationType
 
   get page(): number
 
-  get state(): T
+  get state(): Record<string, any> | undefined
 
-  set state(value: T)
+  set state(value: Record<string, any> | undefined)
 
   get info(): any | undefined
+
+  get canGoBack(): boolean
+
+  get canGoForward(): boolean
+
+  canGoToPage(page: number): boolean
+
+  setNextInfo(type: string, info: any): void
+
+  onBackup(callback: () => Record<string, any>): void
 
   get length(): number
 
@@ -20,20 +30,6 @@ export interface NavigationHistory<T=Record<string, any> | undefined> {
   getItems(): Array<HistoryItem>
 
   findBackPage(location: HistoryLocationRaw): number | undefined
-
-  push(url: string, info?: any): void
-
-  reload(url: string, info?: any): void
-
-  get canGoBack(): boolean
-
-  back(info?: any): void
-
-  get canGoForward(): boolean
-
-  forward(info?: any): void
-
-  goToPage(page: number, info?: any): void
 }
 
 export declare type NavigationHistoryOptions = {

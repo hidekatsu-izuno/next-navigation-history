@@ -1,6 +1,6 @@
 import { NavigationType, HistoryItem, HistoryLocationRaw, NavigationHistory } from "./navigation_history"
 
-export class ServerNavigationHistory<T=Record<string, any> | undefined> implements NavigationHistory<T> {
+export class ServerNavigationHistory implements NavigationHistory {
   constructor(
     public options: Record<string, any> = {}
   ) {
@@ -14,16 +14,36 @@ export class ServerNavigationHistory<T=Record<string, any> | undefined> implemen
     throw new Error('page is not supported on server.')
   }
 
-  get state(): T {
-    throw new Error('data is not supported on server.')
+  get state(): Record<string, any> | undefined {
+    throw new Error('state is not supported on server.')
   }
 
-  set state(value: T) {
-    // no handle
+  set state(value: Record<string, any> | undefined) {
+    throw new Error('state is not supported on server.')
   }
 
   get info() {
     throw new Error('info is not supported on server.')
+  }
+
+  get canGoBack(): boolean {
+    throw new Error('canGoBack is not supported on server.')
+  }
+
+  get canGoForward(): boolean {
+    throw new Error('canGoForward is not supported on server.')
+  }
+
+  canGoToPage(): boolean {
+    throw new Error('canGoToPage is not supported on server.')
+  }
+
+  setNextInfo(type: string, info: any) {
+    throw new Error('setNextInfo is not supported on server.')
+  }
+
+  onBackup(callback: () => Record<string, any>): void {
+    throw new Error('onBackup is not supported on server.')
   }
 
   get length(): number {
@@ -40,33 +60,5 @@ export class ServerNavigationHistory<T=Record<string, any> | undefined> implemen
 
   findBackPage(location: HistoryLocationRaw): number | undefined {
     throw new Error('findBackPosition is not supported on server.')
-  }
-
-  push(url: string, info?: any) {
-    throw new Error('navigate is not supported on server.')
-  }
-
-  reload(info?: any) {
-    throw new Error('reload is not supported on server.')
-  }
-
-  get canGoBack(): boolean {
-    throw new Error('canGoBack is not supported on server.')
-  }
-
-  back(info?: any) {
-    throw new Error('back is not supported on server.')
-  }
-
-  get canGoForward(): boolean {
-    throw new Error('canGoForward is not supported on server.')
-  }
-
-  forward(info?: any)  {
-    throw new Error('forward is not supported on server.')
-  }
-
-  goToPage(page: number, info?: any) {
-    throw new Error('goToPage is not supported on server.')
   }
 }

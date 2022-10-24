@@ -1,9 +1,9 @@
 import LZString from 'lz-string'
-import { Router, useRouter } from 'next/router'
+import { Router } from 'next/router'
 import { NavigationHistoryOptions, NavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
 import { isObjectEqual, isObjectMatch } from './utils/functions'
 
-export class ClientNavigationHistory<T=Record<string, any> | undefined> implements NavigationHistory<T> {
+export class ClientNavigationHistory implements NavigationHistory {
   private _type: NavigationType = 'navigate'
   private _page = 0
   private _items = new Array<[
@@ -15,9 +15,7 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
   private _route?: HistoryLocation
   private _nextInfo?: NextInfo
   private _info?: any
-
-  /** @internal */
-  _callback?: () => Record<string, any>
+  private _callback?: () => Record<string, any>
 
   constructor(
     public options: NavigationHistoryOptions = {}
@@ -140,12 +138,12 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
     return this._page
   }
 
-  get state(): T {
+  get state(): Record<string, any> | undefined {
     const item = this._items[this._page]
-    return ((item && item[2]) || undefined) as T
+    return (item && item[2]) || undefined
   }
 
-  set state(value: T) {
+  set state(value: Record<string, any> | undefined) {
     const item = this._items[this._page]
     if (item) {
       item[2] = value ?? null
@@ -154,6 +152,57 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
 
   get info(): any | undefined {
     return this._info
+  }
+
+  get canGoBack() {
+    return this._page - 1 >= 0
+  }
+
+  get canGoForward() {
+    return this._page + 1 < this._items.length
+  }
+
+  canGoToPage(page: number) {
+    if (page < 0 && page >= this._items.length) {
+      return false
+    }
+
+    if (page < this._page) {
+      for (let p = this._page; p >= page; p--) {
+        const type = this._items[p][0]
+        if (type === 'navigate') {
+          return false
+        }
+      }
+    } else if (page > this._page) {
+      for (let p = this._page + 1; p < page; p++) {
+        const type = this._items[p][0]
+        if (type === 'navigate') {
+          return false
+        }
+      }
+    }
+
+    return true
+  }
+
+  setNextInfo(type: string, info: any) {
+    if (info === undefined) {
+      return
+    }
+
+    let page = this._page
+    if (type === 'push' || type === 'forward') {
+      page = page + 1
+    } else if (type === 'back') {
+      page = page - 1
+    }
+
+    this._nextInfo = { page, type, info }
+  }
+
+  onBackup(callback: () => Record<string, any>) {
+    this._callback = callback
   }
 
   get length(): number {
@@ -205,81 +254,6 @@ export class ClientNavigationHistory<T=Record<string, any> | undefined> implemen
       }
     }
     return undefined
-  }
-
-  push(url: string, info?: any) {
-    if (info !== undefined) {
-      this._nextInfo = { page: this._page + 1, type: "push", info }
-    }
-
-    const router = useRouter()
-    router.push(url)
-  }
-
-  reload(info?: any) {
-    if (info !== undefined) {
-      this._nextInfo = { page: this._page, type: "reload", info }
-    }
-
-    window.location.reload()
-  }
-
-  get canGoBack() {
-    return this._page - 1 >= 0
-  }
-
-  back(info?: any) {
-    if (info !== undefined) {
-      this._nextInfo = { page: this._page - 1, type: "back", info }
-    }
-
-    window.history.back()
-  }
-
-  get canGoForward() {
-    return this._page + 1 < this._items.length
-  }
-
-  forward(info?: any)  {
-    if (info !== undefined) {
-      this._nextInfo = { page: this._page + 1, type: "forward", info }
-    }
-
-    window.history.forward()
-  }
-
-  goToPage(page: number, info?: any) {
-    if (page < 0 && page >= this._items.length) {
-      throw new RangeError(`The page is out of range: ${page}`)
-    }
-
-    if (page < this._page) {
-      for (let p = this._page; p >= page; p--) {
-        const type = this._items[p][0]
-        if (type === 'navigate') {
-          throw new RangeError(`The page is out of range: ${page}`)
-        }
-      }
-
-      if (info !== undefined) {
-        this._nextInfo = { page, type: "back", info }
-      }
-
-      window.history.go(page - this._page)
-    } else if (page > this._page) {
-      if (info !== undefined) {
-        this._nextInfo = { page, type: "forward", info }
-      }
-
-      for (let p = this._page + 1; p < page; p++) {
-        const type = this._items[p][0]
-        if (type === 'navigate') {
-          throw new RangeError(`The page is out of range: ${page}`)
-        }
-      }
-
-      window.history.go(page - this._page)
-    }
   }
 
   private _enter(event: string, url: string, page: number) {
