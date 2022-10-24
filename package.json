@@ -1,6 +1,6 @@
 {
   "name": "next-navigation-history",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Navigation History Plugin for Next.js",
   "main": "lib/index.js",
   "types": "types/index.d.ts",
