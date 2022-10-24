@@ -1,11 +1,11 @@
 # next-navigation-history
 
-Navigation History Plugin for Next.js
+Navigation history plugin for Next.js
 
 [![npm version](https://badge.fury.io/js/next-navigation-history.svg)](https://badge.fury.io/js/next-navigation-history)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-This plugin is usefull for restoring state when users press "Back", "Foward", "Reload".
+This plugin is usefull for restoring state when users press "Back", "Foward" and "Reload".
 
 ## Features
 
@@ -75,6 +75,7 @@ import { useNavigationHistory } from "next-navigation-history"
 
 const SamplePage: NextPage = () => {
   const [value, setValue] = useState({})
+  const [info, setInfo] = useState("")
 
   // If you just want to get a navigationHistory
   const nav = useNavigationHistory()
@@ -87,11 +88,23 @@ const SamplePage: NextPage = () => {
 
   // NavigationHistory is not accessible on the server side
   useEffect(() => {
+    // Restore backup state
     const state = nav.state
     if (state) {
       setValue(state.value)
     }
+
+    // Get info value sent by the transition source.
+    const info = nav.info
+    if (info) {
+      setInfo(info)
+    }
   }, [])
+
+  function next() {
+    // Send info value to the transition destination.
+    nav.back("send infomation!")
+  }
 }
 
 
