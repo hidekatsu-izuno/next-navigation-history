@@ -1,4 +1,3 @@
-import { AppProps } from 'next/app'
 import { NextRouter, useRouter } from 'next/router'
 import { useEffect, useRef, useMemo } from 'react'
 import { GlobalNavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType } from './navigation_history'
@@ -15,7 +14,10 @@ export {
 
 let globalNavigationHistory: GlobalNavigationHistory
 
-export function withNavigationHistory(app: (props: AppProps) => JSX.Element, options: NavigationHistoryOptions = {}): (props: AppProps) => JSX.Element {
+export function withNavigationHistory(
+  app: (...args: any[]) => JSX.Element,
+  options: NavigationHistoryOptions = {}
+): (...args: any[]) => JSX.Element {
   if (typeof window !== "undefined") {
     globalNavigationHistory = new ClientNavigationHistory(options)
   } else {
