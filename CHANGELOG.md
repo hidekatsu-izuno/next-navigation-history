@@ -4,11 +4,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [0.2.0](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.1.0...v0.2.0) (2022-10-24)
 
-
 ### Features
 
-* Add a NavigationRouter ([1c91d4e](https://github.com/hidekatsu-izuno/next-navigation-history/commit/1c91d4e0a961b0b0adf2b525bb7734368226425e))
 * Add router methods ([5d8cfdd](https://github.com/hidekatsu-izuno/next-navigation-history/commit/5d8cfdd10174e985357a97c70286848d774539ac))
+* Add a info passing mechanism like navigation API
 
 ## 0.1.0 (2022-10-23)
 
