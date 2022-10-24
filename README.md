@@ -71,25 +71,25 @@ If you set this option to a selecter, it applies the scrolling to the selector, 
 If you want to access backup data, you have to use a useNavigationHistory.
 
 ```javascript
-import { useNavigationHistory } from 'next-navigation-history'
+import { useNavigationHistory } from "next-navigation-history"
 
 const SamplePage: NextPage = () => {
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState({})
 
   // If you just want to get a navigationHistory
-  const navigationHistory = useNavigationHistory()
+  const nav = useNavigationHistory()
 
   // If you want to backup and restore state
-  const navigationHistory = useNavigationHistory(() => {
+  const nav = useNavigationHistory(() => {
     // Backup state
     return { value }
   })
 
-  // navigationHistory is not accessible on the server side
+  // NavigationHistory is not accessible on the server side
   useEffect(() => {
-    const state = navigationHistory.state
+    const state = nav.state
     if (state) {
-      setValue1(state.value1)
+      setValue(state.value)
     }
   }, [])
 }
@@ -147,10 +147,16 @@ You can get a list of item.
 
 This method cannot be used on the server.
 
-#### findBackPage(location): number?
+#### canGoBack: boolean / canGoForward: boolean
 
-You can get a page number of the first matched history, 
-searching backward in the continuous same site starting at the current page.
+You can test if you can go back/forward.
+
+This method cannot be used on the server.
+
+#### findBackPage(location): number? / findForwardPage(location): number?
+
+You can get a page number of the first match history, 
+searching backward/forward in the continuous same site starting at the current page.
 If a history item is not found or is not in the continuous same site, this method will return undefined.
 
 If the partial option sets true, it matches any subset of the location.
@@ -158,7 +164,7 @@ If the partial option sets true, it matches any subset of the location.
 This method cannot be used on the server.
 
 ```javascript
-const page = navigationHistory.findBackPage({
+const page = nav.findBackPage({
     path: '/test'
     // hash: ...
     // query: ...
@@ -166,12 +172,42 @@ const page = navigationHistory.findBackPage({
 })
 if (page != null) {
     // remove backup state
-    navigationHistory.getItem(page).state = undefined
+    nav.getItem(page).state = undefined
 
     // go back to the page in site.
-    window.history.go(page - navigationHistory.page)
+    nav.goToPage(page)
 }
 ```
+
+#### push(url, info?)
+
+This method is almost the same as router.push(url).
+
+If you set info parameter, it passes info data (like a message) to the next page.
+
+#### reload(info?)
+
+This method is almost the same as window.location.reload().
+
+If you set info parameter, it passes info data (like a message) to the reloaded current page.
+
+#### back(info?)
+
+This method is almost the same as window.history.back().
+
+If you set info parameter, it passes info data (like a message) to the backwarded page.
+
+#### forward(info?)
+
+This method is almost the same as window.history.forward().
+
+If you set info parameter, it passes info data (like a message) to the forwarded page.
+
+#### goToPage(page, info?)
+
+This method is almost the same as window.history.go(page - nav.page).
+
+If you set info parameter, it passes info data (like a message) to the page.
 
 ### HistoryItem
 
