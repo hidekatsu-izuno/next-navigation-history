@@ -15,7 +15,7 @@ This plugin is usefull for restoring state when users press "Back", "Foward" and
 
 ## Supported Vuersion
 
-- Next.js v12 or above
+- Next.js v12
 
 ## Install
 
@@ -125,6 +125,10 @@ A navigation type.
 - forward: When a forward navigation is occurred.
 
 This method cannot be used on the server.
+
+#### visited
+
+If the navigation type is back, forward or reload, this property returns true.
 
 #### page: number
 
