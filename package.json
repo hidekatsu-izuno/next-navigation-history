@@ -43,16 +43,17 @@
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
     "eslint": "^8.24.0",
+    "next": "^12.3.1",
+    "react": "^18.2.0",
     "standard-version": "^9.5.0",
-    "typescript": "^4.8.4",
-    "next": "^12.3.1"
+    "typescript": "^4.8.4"
   },
   "peerDependencies": {
-    "next": ">=12.0.0"
+    "next": ">=12.0.0",
+    "react": ">=18.0.0"
   },
   "dependencies": {
     "lz-string": "^1.4.4",
-    "tslib": "^2.4.0",
-    "react": "^18.0.0"
+    "tslib": "^2.4.0"
   }
 }
