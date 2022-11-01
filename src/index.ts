@@ -1,5 +1,5 @@
 import { NextRouter, useRouter } from 'next/router'
-import { useEffect, useRef, useMemo } from 'react'
+import { useRef } from 'react'
 import { GlobalNavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType } from './navigation_history'
 import { ClientNavigationHistory } from './navigation_history.client'
 import { ServerNavigationHistory } from './navigation_history.server'
@@ -29,26 +29,16 @@ export function withNavigationHistory(
 export function useNavigationHistory<T=any>(
   backup?: () => T
 ): NavigationHistory<T> {
-  const router = useRouter()
-  const navigationHistory = useMemo(() => {
-    return  new NavigationHistory<T>(router)
-  }, [router])
-
   if (backup) {
     const flag = useRef(false)
-    const state = useRef<T>()
-    state.current = backup()
-
-    useEffect(() => {
-      if (typeof window === "undefined" || flag.current) {
-        return
-      }
+    if (typeof window !== "undefined" && !flag.current) {
       flag.current = true
 
       const instance = globalNavigationHistory
       if (!instance) {
         throw new Error('navigationHistory is not initialized.')
       }
+
       instance._onBackup(() => {
         const backupState = state.current || {}
         if (instance.options.debug) {
@@ -56,17 +46,20 @@ export function useNavigationHistory<T=any>(
         }
         return backupState
       })
-    }, [])
+    }
+
+    const state = useRef<T>()
+    state.current = backup()
   }
 
-  return navigationHistory
+  const instance = useRef(new NavigationHistory<T>())
+  instance.current._router = useRouter()
+  return instance.current
 }
 
 export class NavigationHistory<T=any> {
-  constructor(
-    private router: NextRouter
-  ) {
-  }
+  /** @internal */
+  _router?: NextRouter
 
   get type(): NavigationType {
     return globalNavigationHistory.type
@@ -122,7 +115,7 @@ export class NavigationHistory<T=any> {
     if (info !== undefined) {
       globalNavigationHistory._setNextInfo('push', info)
     }
-    this.router.push(url)
+    this._router?.push(url)
   }
 
   reload(info?: any) {
@@ -136,14 +129,14 @@ export class NavigationHistory<T=any> {
     if (info !== undefined) {
       globalNavigationHistory._setNextInfo('back', info)
     }
-    this.router.back()
+    this._router?.back()
   }
 
   forward(info?: any)  {
     if (info !== undefined) {
       globalNavigationHistory._setNextInfo('forward', info)
     }
-    const forward = (this.router as any).forward
+    const forward = (this._router as any).forward
     if (forward) {
       return forward()
     } else {
@@ -170,11 +163,11 @@ export class NavigationHistory<T=any> {
   }
 
   prefetch(href: string) {
-    return this.router.prefetch(href)
+    return this._router?.prefetch(href)
   }
 
   refresh() {
-    const refresh = (this.router as any).refresh
+    const refresh = (this._router as any).refresh
     if (refresh) {
       refresh()
     }
