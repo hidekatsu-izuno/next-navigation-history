@@ -15,7 +15,7 @@ This plugin is usefull for restoring state when users press "Back", "Foward" and
 
 ## Supported Vuersion
 
-- Next.js v12
+- Next.js v12-13
 
 ## Install
 
