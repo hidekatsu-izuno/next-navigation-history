@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.2.0...v0.2.1) (2022-11-01)
+
+
+### Bug Fixes
+
+* Changed to commonjs module for compatibility ([3e95c8b](https://github.com/hidekatsu-izuno/next-navigation-history/commit/3e95c8b52cda6570af5ec19ba0d75503af9957a9))
+* Enhanced Next v13 suppport ([17a6011](https://github.com/hidekatsu-izuno/next-navigation-history/commit/17a60110b4a1267825401c51f6832c53bb93c349))
+* Improve app function type ([c0fd214](https://github.com/hidekatsu-izuno/next-navigation-history/commit/c0fd2143c951b15c66df0354d4a7bcbd08d9d5b8))
+
 ## [0.2.0](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.1.0...v0.2.0) (2022-10-24)
 
 ### Features
