@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## [0.3.0](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.3.0-alpha.0...v0.3.0) (2023-02-24)
 
-## [0.3.0-alpha.0](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.2.2...v0.3.0-alpha.0) (2023-02-24)
+* Imporve module definitions
 
 ### [0.2.2](https://github.com/hidekatsu-izuno/next-navigation-history/compare/v0.2.1...v0.2.2) (2022-11-01)
 
