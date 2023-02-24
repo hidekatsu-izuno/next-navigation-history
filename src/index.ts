@@ -1,8 +1,8 @@
-import { NextRouter, useRouter } from 'next/router'
+import { NextRouter, useRouter } from 'next/router.js'
 import { useRef } from 'react'
-import { GlobalNavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType } from './navigation_history'
-import { ClientNavigationHistory } from './navigation_history.client'
-import { ServerNavigationHistory } from './navigation_history.server'
+import { GlobalNavigationHistory, NavigationHistoryOptions, HistoryLocationRaw, HistoryLocation, HistoryItem, NavigationType } from './navigation_history.js'
+import { ClientNavigationHistory } from './navigation_history.client.js'
+import { ServerNavigationHistory } from './navigation_history.server.js'
 
 export {
   NavigationHistoryOptions,

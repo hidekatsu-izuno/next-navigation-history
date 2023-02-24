@@ -1,4 +1,4 @@
-import { NavigationType, HistoryItem, HistoryLocationRaw, GlobalNavigationHistory } from "./navigation_history"
+import { NavigationType, HistoryItem, HistoryLocationRaw, GlobalNavigationHistory } from "./navigation_history.js"
 
 export class ServerNavigationHistory implements GlobalNavigationHistory {
   constructor(

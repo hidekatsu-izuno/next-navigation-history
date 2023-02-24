@@ -1,7 +1,7 @@
 import LZString from 'lz-string'
-import { Router } from 'next/router'
-import { NavigationHistoryOptions, GlobalNavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history'
-import { isObjectEqual, isObjectMatch } from './utils/functions'
+import { Router } from 'next/router.js'
+import { NavigationHistoryOptions, GlobalNavigationHistory, HistoryLocation, HistoryLocationRaw, HistoryItem, NavigationType } from './navigation_history.js'
+import { isObjectEqual, isObjectMatch } from './utils/functions.js'
 
 export class ClientNavigationHistory implements GlobalNavigationHistory {
   private _type: NavigationType = 'navigate'
